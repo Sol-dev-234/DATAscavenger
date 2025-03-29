@@ -142,6 +142,14 @@ export default function Dashboard() {
               </span>
             </div>
 
+            {user?.isAdmin && (
+              <button
+                onClick={() => navigate('/admin')}
+                className="text-neon-green hover:text-neon-green-bright mr-3 text-sm font-tech-mono"
+              >
+                ADMIN
+              </button>
+            )}
             <button 
               onClick={handleLogout}
               className="text-neon-blue hover:text-neon-red mr-3 text-sm font-tech-mono"
@@ -188,7 +196,7 @@ export default function Dashboard() {
                       className="text-left px-4 py-3 flex justify-between items-center"
                       onClick={() => isActive && handleChallengeClick(challenge.id)}
                     >
-                      <span>Challenge {challenge.order}: {challenge.title}</span>
+                      <span>{challenge.codeName}</span>
                       <span className={isCompleted ? "progress-star bg-neon-green shadow-[0_0_10px_#39ff14]" : "progress-star bg-steel-blue/30"}
                         style={{
                           clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
