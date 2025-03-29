@@ -144,6 +144,18 @@
   .border-neon-blue {
     border-color: #00f3ff;
   }
+  
+  .border-neon-purple {
+    border-color: #9d00ff;
+  }
+  
+  .border-neon-orange {
+    border-color: #ff7700;
+  }
+  
+  .border-neon-pink {
+    border-color: #ff00ff;
+  }
 
   .animate-glow {
     animation: glow 1.5s ease-in-out infinite alternate;

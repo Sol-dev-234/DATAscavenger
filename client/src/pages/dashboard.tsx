@@ -7,6 +7,7 @@ import { CyberpunkButton } from "@/components/ui/cyberpunk-button";
 import { CyberpunkProgress } from "@/components/ui/cyberpunk-progress";
 import { FinalScreen } from "@/components/final-screen";
 import { StarRating } from "@/components/star-rating";
+import { CreditScreen } from "@/components/credit-screen";
 import { motion } from "framer-motion";
 import { Challenge, User } from "@shared/schema";
 
@@ -15,9 +16,9 @@ function getGroupTextClass(groupCode?: string | number) {
   switch(groupCode?.toString()) {
     case "1": return "text-neon-blue";
     case "2": return "text-neon-purple";
-    case "3": return "text-neon-green";
-    case "4": return "text-yellow-500";
-    default: return "text-neon-purple";
+    case "3": return "text-neon-orange";
+    case "4": return "text-neon-pink";
+    default: return "text-neon-blue";
   }
 }
 
@@ -30,6 +31,7 @@ interface ProgressData {
 
 export default function Dashboard() {
   const [showVictory, setShowVictory] = useState(false);
+  const [showCredits, setShowCredits] = useState(true);
   const [, navigate] = useLocation();
   const { user, logoutMutation } = useAuth();
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -100,12 +102,20 @@ export default function Dashboard() {
     navigate("/");
   };
   
+  const handleCreditsComplete = () => {
+    setShowCredits(false);
+  };
+  
   if (showVictory) {
     return <FinalScreen 
       onRestart={handleRestart} 
       completionTime={elapsedTime}
       groupCode={user?.groupCode} 
     />;
+  }
+  
+  if (showCredits) {
+    return <CreditScreen onComplete={handleCreditsComplete} />;
   }
   
   return (

@@ -17,9 +17,9 @@ function getGroupBorderClass(groupCode?: string | number) {
   switch(groupCode?.toString()) {
     case "1": return "border-neon-blue/50";
     case "2": return "border-neon-purple/50";
-    case "3": return "border-neon-green/50";
-    case "4": return "border-yellow-500/50";
-    default: return "border-neon-purple/30";
+    case "3": return "border-neon-orange/50";
+    case "4": return "border-neon-pink/50";
+    default: return "border-neon-blue/30";
   }
 }
 
@@ -27,9 +27,9 @@ function getGroupTextClass(groupCode?: string | number) {
   switch(groupCode?.toString()) {
     case "1": return "text-neon-blue";
     case "2": return "text-neon-purple";
-    case "3": return "text-neon-green";
-    case "4": return "text-yellow-500";
-    default: return "text-neon-purple";
+    case "3": return "text-neon-orange";
+    case "4": return "text-neon-pink";
+    default: return "text-neon-blue";
   }
 }
 
