@@ -5,8 +5,13 @@ import {
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import { db } from "./db";
+import { eq, and, desc } from "drizzle-orm";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
 const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -31,6 +36,13 @@ export interface IStorage {
   createOrUpdateGroupProgress(groupProgress: InsertGroupProgress): Promise<GroupProgress>;
   updateGroupCompletion(groupCode: string, completionTime: number): Promise<GroupProgress | undefined>;
   saveGroupPhoto(groupCode: string, photoData: string): Promise<GroupProgress | undefined>;
+  
+  // Admin methods
+  updateChallenge(id: number, updateChallenge: Partial<InsertChallenge>): Promise<Challenge | undefined>;
+  deleteChallenge(id: number): Promise<boolean>;
+  updateQuiz(id: number, updateQuiz: Partial<InsertQuiz>): Promise<Quiz | undefined>;
+  deleteQuiz(id: number): Promise<boolean>;
+  getAllUsers(): Promise<User[]>;
   
   sessionStore: session.Store;
 }
@@ -244,6 +256,7 @@ export class MemStorage implements IStorage {
       completedChallenges: [],
       completedQuiz: false,
       lastQuizQuestion: 1,
+      isAdmin: insertUser.isAdmin || false,
       updatedAt: new Date()
     };
     this.users.set(id, user);
@@ -305,6 +318,19 @@ export class MemStorage implements IStorage {
     this.challenges.set(id, challenge);
     return challenge;
   }
+
+  async updateChallenge(id: number, updateChallenge: Partial<InsertChallenge>): Promise<Challenge | undefined> {
+    const challenge = this.challenges.get(id);
+    if (!challenge) return undefined;
+    
+    const updatedChallenge = { ...challenge, ...updateChallenge };
+    this.challenges.set(id, updatedChallenge);
+    return updatedChallenge;
+  }
+
+  async deleteChallenge(id: number): Promise<boolean> {
+    return this.challenges.delete(id);
+  }
   
   // Quiz related methods
   async getQuiz(id: number): Promise<Quiz | undefined> {
@@ -327,6 +353,23 @@ export class MemStorage implements IStorage {
     const newQuiz: Quiz = { ...quiz, id };
     this.quizzes.set(id, newQuiz);
     return newQuiz;
+  }
+  
+  async updateQuiz(id: number, updateQuiz: Partial<InsertQuiz>): Promise<Quiz | undefined> {
+    const quiz = this.quizzes.get(id);
+    if (!quiz) return undefined;
+    
+    const updatedQuiz = { ...quiz, ...updateQuiz };
+    this.quizzes.set(id, updatedQuiz);
+    return updatedQuiz;
+  }
+
+  async deleteQuiz(id: number): Promise<boolean> {
+    return this.quizzes.delete(id);
+  }
+  
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
   }
   
   async updateUserQuizProgress(userId: number, questionIndex: number, completed = false): Promise<User | undefined> {
@@ -407,4 +450,259 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true
+    });
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0];
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.username, username));
+    return result[0];
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const result = await db.insert(users).values({
+      ...insertUser,
+      isAdmin: insertUser.isAdmin || false,
+      progress: 0,
+      currentChallenge: 1,
+      completedChallenges: [],
+      completedQuiz: false,
+      lastQuizQuestion: 1
+    }).returning();
+    
+    return result[0];
+  }
+
+  async updateUserProgress(userId: number, progress: number): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set({ progress })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return result[0];
+  }
+
+  async updateUserChallenge(userId: number, challengeId: number): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set({ currentChallenge: challengeId })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return result[0];
+  }
+
+  async addCompletedChallenge(userId: number, challengeId: number): Promise<User | undefined> {
+    // First get the user to check current challenges
+    const userResult = await db.select().from(users).where(eq(users.id, userId));
+    const user = userResult[0];
+    
+    if (!user) return undefined;
+    
+    // Only add if not already completed
+    if (!user.completedChallenges.includes(challengeId.toString())) {
+      const completedChallenges = [...user.completedChallenges, challengeId.toString()];
+      const progress = Math.min(100, completedChallenges.length * 20); // 20% per challenge, max 100%
+      const nextChallenge = Math.min(5, challengeId + 1); // Move to next challenge, max is 5
+      
+      const result = await db.update(users)
+        .set({ 
+          completedChallenges,
+          progress,
+          currentChallenge: nextChallenge
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      return result[0];
+    }
+    
+    return user;
+  }
+
+  async getChallenge(id: number): Promise<Challenge | undefined> {
+    const result = await db.select().from(challenges).where(eq(challenges.id, id));
+    return result[0];
+  }
+
+  async getAllChallenges(): Promise<Challenge[]> {
+    const result = await db.select().from(challenges).orderBy(challenges.order);
+    return result;
+  }
+
+  async createChallenge(insertChallenge: InsertChallenge): Promise<Challenge> {
+    const result = await db.insert(challenges).values(insertChallenge).returning();
+    return result[0];
+  }
+
+  async updateChallenge(id: number, updateChallenge: Partial<InsertChallenge>): Promise<Challenge | undefined> {
+    const result = await db.update(challenges)
+      .set(updateChallenge)
+      .where(eq(challenges.id, id))
+      .returning();
+    
+    return result[0];
+  }
+
+  async deleteChallenge(id: number): Promise<boolean> {
+    const result = await db.delete(challenges).where(eq(challenges.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getQuiz(id: number): Promise<Quiz | undefined> {
+    const result = await db.select().from(quizzes).where(eq(quizzes.id, id));
+    return result[0];
+  }
+  
+  async getQuizzesByGroup(groupCode: string): Promise<Quiz[]> {
+    const result = await db.select()
+      .from(quizzes)
+      .where(eq(quizzes.groupCode, groupCode))
+      .orderBy(quizzes.quizIndex);
+    
+    return result;
+  }
+  
+  async getQuizByGroupAndIndex(groupCode: string, quizIndex: number): Promise<Quiz | undefined> {
+    const result = await db.select()
+      .from(quizzes)
+      .where(
+        and(
+          eq(quizzes.groupCode, groupCode),
+          eq(quizzes.quizIndex, quizIndex)
+        )
+      );
+    
+    return result[0];
+  }
+  
+  async createQuiz(quiz: InsertQuiz): Promise<Quiz> {
+    const result = await db.insert(quizzes).values(quiz).returning();
+    return result[0];
+  }
+
+  async updateQuiz(id: number, updateQuiz: Partial<InsertQuiz>): Promise<Quiz | undefined> {
+    const result = await db.update(quizzes)
+      .set(updateQuiz)
+      .where(eq(quizzes.id, id))
+      .returning();
+    
+    return result[0];
+  }
+
+  async deleteQuiz(id: number): Promise<boolean> {
+    const result = await db.delete(quizzes).where(eq(quizzes.id, id)).returning();
+    return result.length > 0;
+  }
+  
+  async updateUserQuizProgress(userId: number, questionIndex: number, completed = false): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set({
+        lastQuizQuestion: questionIndex,
+        completedQuiz: completed
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return result[0];
+  }
+  
+  async getGroupProgress(groupCode: string): Promise<GroupProgress | undefined> {
+    const result = await db.select()
+      .from(groupProgress)
+      .where(eq(groupProgress.groupCode, groupCode));
+    
+    return result[0];
+  }
+  
+  async createOrUpdateGroupProgress(insertGroupProgress: InsertGroupProgress): Promise<GroupProgress> {
+    // Try to get existing group progress
+    const existingProgress = await this.getGroupProgress(insertGroupProgress.groupCode);
+    
+    if (existingProgress) {
+      // Update existing record
+      const result = await db.update(groupProgress)
+        .set({
+          completedQuiz: insertGroupProgress.completedQuiz ?? existingProgress.completedQuiz,
+          completionTime: insertGroupProgress.completionTime ?? existingProgress.completionTime,
+          groupPhoto: insertGroupProgress.groupPhoto ?? existingProgress.groupPhoto
+        })
+        .where(eq(groupProgress.id, existingProgress.id))
+        .returning();
+      
+      return result[0];
+    } else {
+      // Create new record
+      const result = await db.insert(groupProgress)
+        .values(insertGroupProgress)
+        .returning();
+      
+      return result[0];
+    }
+  }
+  
+  async updateGroupCompletion(groupCode: string, completionTime: number): Promise<GroupProgress | undefined> {
+    const existingProgress = await this.getGroupProgress(groupCode);
+    
+    if (!existingProgress) {
+      // Create a new progress record
+      return this.createOrUpdateGroupProgress({
+        groupCode,
+        completionTime,
+        completedQuiz: true
+      });
+    }
+    
+    // Update existing record
+    const result = await db.update(groupProgress)
+      .set({
+        completedQuiz: true,
+        completionTime
+      })
+      .where(eq(groupProgress.id, existingProgress.id))
+      .returning();
+    
+    return result[0];
+  }
+  
+  async saveGroupPhoto(groupCode: string, photoData: string): Promise<GroupProgress | undefined> {
+    const existingProgress = await this.getGroupProgress(groupCode);
+    
+    if (!existingProgress) {
+      // Create a new progress record
+      return this.createOrUpdateGroupProgress({
+        groupCode,
+        groupPhoto: photoData
+      });
+    }
+    
+    // Update existing record
+    const result = await db.update(groupProgress)
+      .set({
+        groupPhoto: photoData
+      })
+      .where(eq(groupProgress.id, existingProgress.id))
+      .returning();
+    
+    return result[0];
+  }
+
+  // Admin methods for users
+  async getAllUsers(): Promise<User[]> {
+    const result = await db.select().from(users);
+    return result;
+  }
+}
+
+// Use Database Storage
+export const storage = new DatabaseStorage();

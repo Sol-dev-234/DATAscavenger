@@ -1,8 +1,23 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { z } from "zod";
+import { insertChallengeSchema, insertQuizSchema } from "@shared/schema";
+
+// Admin middleware
+function isAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.sendStatus(401);
+  }
+  
+  const user = req.user as Express.User;
+  if (!user.isAdmin) {
+    return res.status(403).json({ message: "Administrator access required" });
+  }
+  
+  next();
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
@@ -320,6 +335,233 @@ export async function registerRoutes(app: Express): Promise<Server> {
         completedQuiz: groupProgress.completedQuiz,
         completionTime: groupProgress.completionTime,
         hasPhoto: !!groupProgress.groupPhoto
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch group progress" });
+    }
+  });
+
+  // ========== ADMIN API ROUTES ==========
+
+  // Get all users (admin only)
+  app.get("/api/admin/users", isAdmin, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Get all challenges with answers (admin only)
+  app.get("/api/admin/challenges", isAdmin, async (req, res) => {
+    try {
+      const challenges = await storage.getAllChallenges();
+      res.json(challenges);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch challenges" });
+    }
+  });
+
+  // Get a specific challenge with answers (admin only)
+  app.get("/api/admin/challenges/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid challenge ID" });
+      }
+      
+      const challenge = await storage.getChallenge(id);
+      if (!challenge) {
+        return res.status(404).json({ message: "Challenge not found" });
+      }
+      
+      res.json(challenge);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch challenge" });
+    }
+  });
+
+  // Create a new challenge (admin only)
+  app.post("/api/admin/challenges", isAdmin, async (req, res) => {
+    try {
+      const result = insertChallengeSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid challenge data", 
+          errors: result.error.format() 
+        });
+      }
+      
+      const challenge = await storage.createChallenge(result.data);
+      res.status(201).json(challenge);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create challenge" });
+    }
+  });
+
+  // Update a challenge (admin only)
+  app.put("/api/admin/challenges/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid challenge ID" });
+      }
+      
+      const result = insertChallengeSchema.partial().safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid challenge data", 
+          errors: result.error.format() 
+        });
+      }
+      
+      const challenge = await storage.updateChallenge(id, result.data);
+      if (!challenge) {
+        return res.status(404).json({ message: "Challenge not found" });
+      }
+      
+      res.json(challenge);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update challenge" });
+    }
+  });
+
+  // Delete a challenge (admin only)
+  app.delete("/api/admin/challenges/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid challenge ID" });
+      }
+      
+      const success = await storage.deleteChallenge(id);
+      if (!success) {
+        return res.status(404).json({ message: "Challenge not found" });
+      }
+      
+      res.json({ message: "Challenge deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete challenge" });
+    }
+  });
+
+  // Get all quizzes (admin only)
+  app.get("/api/admin/quizzes", isAdmin, async (req, res) => {
+    try {
+      // Get quizzes for all groups
+      const group1Quizzes = await storage.getQuizzesByGroup("1");
+      const group2Quizzes = await storage.getQuizzesByGroup("2");
+      const group3Quizzes = await storage.getQuizzesByGroup("3");
+      const group4Quizzes = await storage.getQuizzesByGroup("4");
+      
+      res.json({
+        group1: group1Quizzes,
+        group2: group2Quizzes,
+        group3: group3Quizzes,
+        group4: group4Quizzes
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch quizzes" });
+    }
+  });
+
+  // Get a specific quiz (admin only)
+  app.get("/api/admin/quizzes/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid quiz ID" });
+      }
+      
+      const quiz = await storage.getQuiz(id);
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+      
+      res.json(quiz);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch quiz" });
+    }
+  });
+
+  // Create a new quiz (admin only)
+  app.post("/api/admin/quizzes", isAdmin, async (req, res) => {
+    try {
+      const result = insertQuizSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid quiz data", 
+          errors: result.error.format() 
+        });
+      }
+      
+      const quiz = await storage.createQuiz(result.data);
+      res.status(201).json(quiz);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create quiz" });
+    }
+  });
+
+  // Update a quiz (admin only)
+  app.put("/api/admin/quizzes/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid quiz ID" });
+      }
+      
+      const result = insertQuizSchema.partial().safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid quiz data", 
+          errors: result.error.format() 
+        });
+      }
+      
+      const quiz = await storage.updateQuiz(id, result.data);
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+      
+      res.json(quiz);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update quiz" });
+    }
+  });
+
+  // Delete a quiz (admin only)
+  app.delete("/api/admin/quizzes/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid quiz ID" });
+      }
+      
+      const success = await storage.deleteQuiz(id);
+      if (!success) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+      
+      res.json({ message: "Quiz deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete quiz" });
+    }
+  });
+
+  // Get all group progress (admin only)
+  app.get("/api/admin/group-progress", isAdmin, async (req, res) => {
+    try {
+      const group1Progress = await storage.getGroupProgress("1");
+      const group2Progress = await storage.getGroupProgress("2");
+      const group3Progress = await storage.getGroupProgress("3");
+      const group4Progress = await storage.getGroupProgress("4");
+      
+      res.json({
+        group1: group1Progress || { groupCode: "1", completedQuiz: false, completionTime: 0, hasPhoto: false },
+        group2: group2Progress || { groupCode: "2", completedQuiz: false, completionTime: 0, hasPhoto: false },
+        group3: group3Progress || { groupCode: "3", completedQuiz: false, completionTime: 0, hasPhoto: false },
+        group4: group4Progress || { groupCode: "4", completedQuiz: false, completionTime: 0, hasPhoto: false }
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch group progress" });

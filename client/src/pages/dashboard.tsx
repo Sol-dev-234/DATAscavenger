@@ -140,6 +140,14 @@ export default function Dashboard() {
                 GROUP {user?.groupCode}
               </span>
             </div>
+            {user?.isAdmin && (
+              <button
+                onClick={() => navigate('/admin')}
+                className="text-neon-green hover:text-neon-green-bright mr-3 text-sm font-tech-mono"
+              >
+                ADMIN
+              </button>
+            )}
             <button 
               onClick={handleLogout}
               className="text-neon-blue hover:text-neon-red mr-3 text-sm font-tech-mono"

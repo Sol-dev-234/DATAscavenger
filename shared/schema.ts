@@ -12,6 +12,7 @@ export const users = pgTable("users", {
   completedChallenges: text("completed_challenges").array().notNull().default([]),
   completedQuiz: boolean("completed_quiz").default(false),
   lastQuizQuestion: integer("last_quiz_question").default(1),
+  isAdmin: boolean("is_admin").default(false),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
@@ -46,6 +47,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
   groupCode: true,
+  isAdmin: true,
 });
 
 export const loginUserSchema = createInsertSchema(users).pick({
