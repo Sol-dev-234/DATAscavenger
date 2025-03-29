@@ -2,12 +2,46 @@ import { motion } from "framer-motion";
 import { CyberpunkPanel } from "@/components/ui/cyberpunk-panel";
 import { CyberpunkButton } from "@/components/ui/cyberpunk-button";
 import { StarRating } from "@/components/star-rating";
+import { useEffect, useState } from "react";
 
 interface FinalScreenProps {
   onRestart: () => void;
+  completionTime?: number;
+  groupCode?: string | number;
 }
 
-export function FinalScreen({ onRestart }: FinalScreenProps) {
+function getGroupTextClass(groupCode?: string | number) {
+  if (!groupCode) return "text-neon-blue";
+  
+  switch (groupCode.toString()) {
+    case "1": return "text-neon-blue";
+    case "2": return "text-neon-purple";
+    case "3": return "text-neon-orange";
+    case "4": return "text-neon-pink";
+    default: return "text-neon-blue";
+  }
+}
+
+export function FinalScreen({ onRestart, completionTime = 0, groupCode = "1" }: FinalScreenProps) {
+  const [showFinalMsg, setShowFinalMsg] = useState(false);
+  
+  useEffect(() => {
+    // Show the final message after 2 seconds
+    const timer = setTimeout(() => {
+      setShowFinalMsg(true);
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  // Format time as mm:ss
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+  
+  const groupTextColor = getGroupTextClass(groupCode);
   return (
     <motion.div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-cyber-black"

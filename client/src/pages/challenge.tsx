@@ -12,6 +12,64 @@ import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { Challenge as ChallengeType } from "@shared/schema";
 
+// Helper functions for group-specific styling
+function getGroupBorderClass(groupCode?: string | number) {
+  switch(groupCode?.toString()) {
+    case "1": return "border-neon-blue/50";
+    case "2": return "border-neon-purple/50";
+    case "3": return "border-neon-green/50";
+    case "4": return "border-yellow-500/50";
+    default: return "border-neon-purple/30";
+  }
+}
+
+function getGroupTextClass(groupCode?: string | number) {
+  switch(groupCode?.toString()) {
+    case "1": return "text-neon-blue";
+    case "2": return "text-neon-purple";
+    case "3": return "text-neon-green";
+    case "4": return "text-yellow-500";
+    default: return "text-neon-purple";
+  }
+}
+
+// Group-specific hints based on challenge ID and group
+function getGroupSpecificHint(challengeId: number, groupCode?: string | number) {
+  const group = groupCode?.toString() || "1";
+  const hints: Record<string, Record<number, string>> = {
+    "1": {
+      1: "Look for hidden QR codes in blue marked areas. Binary might be useful.",
+      2: "The Caesar Cipher key for your group is 3. Shift letters forward.",
+      3: "Your binary sequence is hidden in the network diagram. Convert to ASCII.",
+      4: "Check near the computer lab entrance for your QR code.",
+      5: "Focus on networking and infrastructure questions in your quiz."
+    },
+    "2": {
+      1: "Search for clues in purple marked zones. Morse code could be helpful.",
+      2: "Your group's Caesar Cipher key is 5. Count forward in the alphabet.",
+      3: "Binary sequences for Group 2 are hidden on the bulletin board.",
+      4: "Your QR code is near the faculty room.",
+      5: "Database and storage questions will be prominent in your quiz."
+    },
+    "3": {
+      1: "Green areas contain your clues. Check for patterns in the text.",
+      2: "Group 3 uses Caesar Cipher key 7. Count seven letters ahead.",
+      3: "Binary code is hidden in the classroom projector screen.",
+      4: "Your QR code can be found near the library entrance.",
+      5: "Security and encryption topics will be your focus."
+    },
+    "4": {
+      1: "Yellow markers show where to search. Numbers may have significance.",
+      2: "Your Caesar Cipher key is 9. Shift nine positions forward.",
+      3: "Look for binary sequences posted near the canteen.",
+      4: "Find your QR code around the student lounge area.",
+      5: "Artificial Intelligence and programming questions await your group."
+    }
+  };
+  
+  return hints[group]?.[challengeId] || "Use the decoder tools below to help solve this challenge. Each challenge may require different tools.";
+}
+
 export default function Challenge() {
   const params = useParams<{ id: string }>();
   const challengeId = parseInt(params.id);
@@ -164,10 +222,10 @@ export default function Challenge() {
               )}
             </form>
             
-            <div className="mt-6 p-3 border border-neon-purple/30 rounded-sm">
-              <h3 className="font-orbitron text-neon-purple mb-2 text-sm">HINT:</h3>
+            <div className={`mt-6 p-3 border ${getGroupBorderClass(user?.groupCode)} rounded-sm`}>
+              <h3 className={`font-orbitron ${getGroupTextClass(user?.groupCode)} mb-2 text-sm`}>GROUP {user?.groupCode} HINT:</h3>
               <p className="font-tech-mono text-sm text-steel-blue">
-                Use the decoder tools below to help solve this challenge. Each challenge may require different tools.
+                {getGroupSpecificHint(challengeId, user?.groupCode)}
               </p>
             </div>
           </div>

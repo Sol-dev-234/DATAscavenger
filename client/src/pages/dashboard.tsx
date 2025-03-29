@@ -10,6 +10,17 @@ import { StarRating } from "@/components/star-rating";
 import { motion } from "framer-motion";
 import { Challenge, User } from "@shared/schema";
 
+// Helper function for group-specific text styling
+function getGroupTextClass(groupCode?: string | number) {
+  switch(groupCode?.toString()) {
+    case "1": return "text-neon-blue";
+    case "2": return "text-neon-purple";
+    case "3": return "text-neon-green";
+    case "4": return "text-yellow-500";
+    default: return "text-neon-purple";
+  }
+}
+
 interface ProgressData {
   progress: number;
   currentChallenge: number;
@@ -21,6 +32,8 @@ export default function Dashboard() {
   const [showVictory, setShowVictory] = useState(false);
   const [, navigate] = useLocation();
   const { user, logoutMutation } = useAuth();
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [timerStarted, setTimerStarted] = useState(false);
   
   const {
     data: challenges,
@@ -46,6 +59,33 @@ export default function Dashboard() {
       setShowVictory(true);
     }
   }, [progress]);
+  
+  // Timer logic
+  useEffect(() => {
+    // Start timer when challenges are started but not completed
+    if (progress && progress.completedChallenges?.length > 0 && (progress.progress || 0) < 100 && !timerStarted) {
+      setTimerStarted(true);
+    }
+    
+    // Timer interval
+    let interval: NodeJS.Timeout | null = null;
+    if (timerStarted && (progress?.progress || 0) < 100) {
+      interval = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [progress, timerStarted]);
+  
+  // Format time as mm:ss
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
   
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -76,7 +116,7 @@ export default function Dashboard() {
               <span className="font-tech-mono text-steel-blue">
                 {user?.username.toUpperCase()}
               </span>
-              <span className="font-tech-mono text-xs text-neon-purple">
+              <span className={`font-tech-mono text-xs ${getGroupTextClass(user?.groupCode)}`}>
                 GROUP {user?.groupCode}
               </span>
             </div>
@@ -157,6 +197,17 @@ export default function Dashboard() {
               activeStar={progress?.completedChallenges?.length || 0}
             />
           </div>
+          
+          {timerStarted && (
+            <div className="mt-4 p-3 border border-neon-blue/30 rounded-sm">
+              <div className="flex justify-between items-center">
+                <h3 className="font-orbitron text-neon-blue text-sm">MISSION TIME:</h3>
+                <span className="font-tech-mono text-neon-green text-xl tabular-nums">
+                  {formatTime(elapsedTime)}
+                </span>
+              </div>
+            </div>
+          )}
         </CyberpunkPanel>
         
         {/* Right Panel: Welcome Screen */}
