@@ -170,15 +170,18 @@ export default function AuthPage() {
                 <select
                   id="group-code"
                   {...registerForm.register("groupCode")}
-                  className="w-full rounded-sm bg-cyber-black border-2 border-neon-blue/50 text-steel-blue p-2 focus:outline-none focus:border-neon-blue font-tech-mono"
+                  className="w-full rounded-sm bg-cyber-black border-2 border-neon-blue/50 text-steel-blue p-3 focus:outline-none focus:border-neon-blue font-tech-mono appearance-none cursor-pointer hover:bg-cyber-black/50 transition-colors"
                 >
-                  <option value="" disabled>SELECT GROUP</option>
-                  <option value="1">GROUP 1</option>
-                  <option value="2">GROUP 2</option>
-                  <option value="3">GROUP 3</option>
-                  <option value="4">GROUP 4</option>
-                  <option value="admin">ADMIN</option>
+                  <option value="" disabled className="bg-cyber-black text-steel-blue">SELECT GROUP</option>
+                  <option value="1" className="bg-cyber-black text-neon-blue py-2">GROUP ALPHA [1]</option>
+                  <option value="2" className="bg-cyber-black text-neon-purple py-2">GROUP BETA [2]</option>
+                  <option value="3" className="bg-cyber-black text-neon-orange py-2">GROUP GAMMA [3]</option>
+                  <option value="4" className="bg-cyber-black text-neon-pink py-2">GROUP DELTA [4]</option>
+                  <option value="admin" className="bg-cyber-black text-red-500 py-2">ADMINISTRATOR ACCESS</option>
                 </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-steel-blue">
+                  ▼
+                </div>
                 {registerForm.formState.errors.groupCode && (
                   <p className="text-xs text-red-500 font-tech-mono">
                     {registerForm.formState.errors.groupCode.message}
