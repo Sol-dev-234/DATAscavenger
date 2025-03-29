@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 225 30% 5.9%;
+    --foreground: 210 20% 60%;
+
+    --card: 225 30% 5.9%;
+    --card-foreground: 210 20% 60%;
+
+    --popover: 225 30% 5.9%;
+    --popover-foreground: 210 20% 60%;
+
+    --primary: 183 100% 50%;
+    --primary-foreground: 210 20% 98%;
+
+    --secondary: 273 100% 50%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 126 100% 54%;
+    --accent-foreground: 210 20% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 183 100% 50%;
+
+    --chart-1: 0 0% 100%;
+    --chart-2: 0 0% 91%;
+    --chart-3: 0 0% 81%;
+    --chart-4: 0 0% 71%;
+    --chart-5: 0 0% 61%;
+
+    --radius: 0.25rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    background-color: #0a0a0f;
+    background-image: 
+      linear-gradient(rgba(0, 243, 255, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 243, 255, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-orbitron;
+  }
+
+  input, textarea, select {
+    @apply font-tech-mono;
+  }
+
+  .screen-overlay {
+    @apply fixed inset-0 pointer-events-none z-50;
+    background: radial-gradient(ellipse at center, rgba(0, 243, 255, 0.03) 0%, rgba(10, 10, 15, 0) 70%);
+  }
+
+  .scan-line {
+    @apply fixed inset-0 pointer-events-none z-50;
+    background: linear-gradient(to bottom, 
+      rgba(255, 255, 255, 0) 0%, 
+      rgba(0, 243, 255, 0.03) 50%, 
+      rgba(255, 255, 255, 0) 100%);
+    background-size: 100% 8px;
+  }
+}
+
+@layer utilities {
+  .font-orbitron {
+    font-family: 'Orbitron', sans-serif;
+  }
+
+  .font-tech-mono {
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .text-neon-blue {
+    color: #00f3ff;
+    text-shadow: 0 0 5px #00f3ff80;
+  }
+
+  .text-neon-purple {
+    color: #9d00ff;
+    text-shadow: 0 0 5px #9d00ff80;
+  }
+
+  .text-neon-green {
+    color: #39ff14;
+    text-shadow: 0 0 5px #39ff1480;
+  }
+
+  .text-steel-blue {
+    color: #7a98b8;
+  }
+
+  .bg-cyber-black {
+    background-color: #0a0a0f;
+  }
+
+  .bg-neon-blue {
+    background-color: #00f3ff;
+  }
+
+  .bg-neon-purple {
+    background-color: #9d00ff;
+  }
+
+  .bg-neon-green {
+    background-color: #39ff14;
+  }
+
+  .border-neon-blue {
+    border-color: #00f3ff;
+  }
+
+  .animate-glow {
+    animation: glow 1.5s ease-in-out infinite alternate;
+  }
+
+  .animate-flicker {
+    animation: flicker 1.5s infinite alternate;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .typing-animation {
+    overflow: hidden;
+    border-right: 2px solid #00f3ff;
+    white-space: nowrap;
+    margin: 0;
+    animation: typing 3.5s steps(30, end), blink-caret 0.75s step-end infinite;
+  }
+
+  @keyframes glow {
+    0% { 
+      box-shadow: 0 0 5px #00f3ff, 0 0 10px #00f3ff;
+    }
+    100% { 
+      box-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff, 0 0 30px #00f3ff;
+    }
+  }
+
+  @keyframes flicker {
+    0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
+    20%, 24%, 55% { opacity: 0.5; }
+  }
+
+  @keyframes typing {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+
+  @keyframes blink-caret {
+    from, to { border-color: transparent; }
+    50% { border-color: #00f3ff; }
+  }
+}
