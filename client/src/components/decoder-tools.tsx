@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { Camera } from "lucide-react";
 import { CyberpunkPanel } from "@/components/ui/cyberpunk-panel";
 import { CyberpunkButton } from "@/components/ui/cyberpunk-button";
 import { CyberpunkInput } from "@/components/ui/cyberpunk-input";
 import { Input } from "@/components/ui/input";
+import { WebcamCapture } from "@/components/webcam-capture";
 
 export function DecoderTools() {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,6 +37,18 @@ export function DecoderTools() {
 function BinaryDecoder() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("[OUTPUT WILL APPEAR HERE]");
+  const [showCamera, setShowCamera] = useState(false);
+  
+  const handleImageCapture = async (imageData: string) => {
+    try {
+      // Here we would integrate with OCR API to extract text
+      // For now, simulating OCR with sample binary
+      setInput("01001000 01100101 01101100 01101100 01101111");
+      setShowCamera(false);
+    } catch (error) {
+      console.error('Failed to process image:', error);
+    }
+  };
   
   const handleDecode = () => {
     try {
@@ -53,12 +67,30 @@ function BinaryDecoder() {
     <CyberpunkPanel className="p-3">
       <h3 className="font-orbitron text-neon-green text-sm mb-2">BINARY DECODER</h3>
       <div className="flex flex-col space-y-2">
-        <CyberpunkInput
-          placeholder="01001000 01101001"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="text-sm"
-        />
+        <div className="flex gap-2">
+          <CyberpunkInput
+            placeholder="01001000 01101001"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            className="text-sm flex-1"
+          />
+          <CyberpunkButton
+            variant="accent"
+            size="sm"
+            onClick={() => setShowCamera(true)}
+            className="text-sm"
+          >
+            <Camera className="h-4 w-4" />
+          </CyberpunkButton>
+        </div>
+        {showCamera && (
+          <div className="mt-2">
+            <WebcamCapture
+              onCapture={handleImageCapture}
+              onClose={() => setShowCamera(false)}
+            />
+          </div>
+        )}
         <CyberpunkButton 
           variant="accent" 
           size="sm" 
@@ -79,6 +111,18 @@ function CaesarCipher() {
   const [input, setInput] = useState("");
   const [shift, setShift] = useState(3);
   const [output, setOutput] = useState("[OUTPUT WILL APPEAR HERE]");
+  const [showCamera, setShowCamera] = useState(false);
+  
+  const handleImageCapture = async (imageData: string) => {
+    try {
+      // Here we would integrate with OCR API to extract text
+      // For now, simulating OCR with sample text
+      setInput("KHOOR");
+      setShowCamera(false);
+    } catch (error) {
+      console.error('Failed to process image:', error);
+    }
+  };
   
   const handleDecode = () => {
     try {
@@ -106,12 +150,30 @@ function CaesarCipher() {
     <CyberpunkPanel className="p-3">
       <h3 className="font-orbitron text-neon-green text-sm mb-2">CAESAR CIPHER</h3>
       <div className="flex flex-col space-y-2">
-        <CyberpunkInput
-          placeholder="Enter text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="text-sm"
-        />
+        <div className="flex gap-2">
+          <CyberpunkInput
+            placeholder="Enter text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            className="text-sm flex-1"
+          />
+          <CyberpunkButton
+            variant="accent"
+            size="sm"
+            onClick={() => setShowCamera(true)}
+            className="text-sm"
+          >
+            <Camera className="h-4 w-4" />
+          </CyberpunkButton>
+        </div>
+        {showCamera && (
+          <div className="mt-2">
+            <WebcamCapture
+              onCapture={handleImageCapture}
+              onClose={() => setShowCamera(false)}
+            />
+          </div>
+        )}
         <div className="flex gap-2">
           <CyberpunkInput
             type="number"
