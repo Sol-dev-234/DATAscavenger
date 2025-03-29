@@ -48,6 +48,11 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
   groupCode: true,
   isAdmin: true,
+}).extend({
+  groupCode: z.enum(["1", "2", "3", "4", "admin"], {
+    errorMap: () => ({ message: "Group code must be 1, 2, 3, 4, or admin" }),
+  }),
+  adminCode: z.string().optional(),
 });
 
 export const loginUserSchema = createInsertSchema(users).pick({

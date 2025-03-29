@@ -33,9 +33,10 @@ export default function AuthPage() {
   const registerSchema = insertUserSchema.extend({
     username: z.string().min(3, "Username must be at least 3 characters"),
     password: z.string().min(4, "Password must be at least 4 characters"),
-    groupCode: z.enum(["1", "2", "3", "4"], {
-      errorMap: () => ({ message: "Group code must be 1, 2, 3, or 4" }),
+    groupCode: z.enum(["1", "2", "3", "4", "admin"], {
+      errorMap: () => ({ message: "Please select a valid group" }),
     }),
+    adminCode: z.string().optional(),
   });
 
   // Login form setup
@@ -54,6 +55,7 @@ export default function AuthPage() {
       username: "",
       password: "",
       groupCode: undefined,
+      adminCode: "",
     },
   });
 
@@ -175,6 +177,7 @@ export default function AuthPage() {
                   <option value="2">GROUP 2</option>
                   <option value="3">GROUP 3</option>
                   <option value="4">GROUP 4</option>
+                  <option value="admin">ADMIN</option>
                 </select>
                 {registerForm.formState.errors.groupCode && (
                   <p className="text-xs text-red-500 font-tech-mono">
@@ -182,6 +185,21 @@ export default function AuthPage() {
                   </p>
                 )}
               </div>
+              
+              {registerForm.watch("groupCode") === "admin" && (
+                <div className="space-y-2">
+                  <label htmlFor="admin-code" className="block font-tech-mono text-steel-blue">
+                    ADMIN AUTHENTICATION CODE:
+                  </label>
+                  <CyberpunkInput
+                    id="admin-code"
+                    type="password"
+                    {...registerForm.register("adminCode")}
+                    className="w-full rounded-sm"
+                    placeholder="Enter administrator code"
+                  />
+                </div>
+              )}
               
               <div className="pt-4">
                 <CyberpunkButton

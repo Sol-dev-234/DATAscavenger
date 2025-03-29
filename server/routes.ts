@@ -12,7 +12,7 @@ function isAdmin(req: Request, res: Response, next: NextFunction) {
   }
   
   const user = req.user as Express.User;
-  if (!user.isAdmin) {
+  if (!user.isAdmin || user.groupCode !== "admin") {
     return res.status(403).json({ message: "Administrator access required" });
   }
   
@@ -338,6 +338,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch group progress" });
+    }
+  });
+  
+  // Get group members progress
+  app.get("/api/group-members", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const user = req.user as Express.User;
+      
+      // Get all users in the same group
+      const allUsers = await storage.getAllUsers();
+      const groupMembers = allUsers.filter(member => member.groupCode === user.groupCode);
+      
+      // Remove sensitive information
+      const sanitizedMembers = groupMembers.map(member => ({
+        id: member.id,
+        username: member.username,
+        progress: member.progress,
+        completedChallenges: member.completedChallenges,
+        completedQuiz: member.completedQuiz,
+        lastQuizQuestion: member.lastQuizQuestion
+      }));
+      
+      return res.json(sanitizedMembers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch group members" });
     }
   });
 

@@ -10,6 +10,7 @@ import { StarRating } from "@/components/star-rating";
 import { CreditScreen } from "@/components/credit-screen";
 import { motion } from "framer-motion";
 import { Challenge, User } from "@shared/schema";
+import { GroupMembers } from "@/components/group-members";
 
 // Helper function for group-specific text styling
 function getGroupTextClass(groupCode?: string | number) {
@@ -140,14 +141,7 @@ export default function Dashboard() {
                 GROUP {user?.groupCode}
               </span>
             </div>
-            {user?.isAdmin && (
-              <button
-                onClick={() => navigate('/admin')}
-                className="text-neon-green hover:text-neon-green-bright mr-3 text-sm font-tech-mono"
-              >
-                ADMIN
-              </button>
-            )}
+
             <button 
               onClick={handleLogout}
               className="text-neon-blue hover:text-neon-red mr-3 text-sm font-tech-mono"
@@ -255,6 +249,11 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+          
+          {/* Group Members */}
+          <div className="mt-4 p-3 border border-neon-blue/30 rounded-sm">
+            <GroupMembers />
+          </div>
           
           {/* Timer */}
           {timerStarted && (

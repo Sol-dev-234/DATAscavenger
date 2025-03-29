@@ -63,7 +63,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { username, password, groupCode, isAdmin = false } = req.body;
+      const { username, password, groupCode, adminCode = "" } = req.body;
       
       if (!username || !password || !groupCode) {
         return res.status(400).json({ message: "Username, password, and group code are required" });
@@ -74,15 +74,19 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Username already exists" });
       }
 
-      // Check if this is the first user in the system - make them an admin
-      const allUsers = await storage.getAllUsers();
-      const makeAdmin = allUsers.length === 0 || isAdmin;
+      // Check if the admin code is correct
+      const isAdmin = groupCode === "admin" && adminCode === "Godbless";
+      
+      // Verify admin group can only be created with correct admin code
+      if (groupCode === "admin" && !isAdmin) {
+        return res.status(403).json({ message: "Invalid admin authentication code" });
+      }
 
       const user = await storage.createUser({
         username,
         groupCode,
         password: await hashPassword(password),
-        isAdmin: makeAdmin
+        isAdmin
       });
 
       // Remove password from response

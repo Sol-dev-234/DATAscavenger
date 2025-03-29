@@ -912,11 +912,26 @@ export default function AdminPage() {
     return <Redirect to="/dashboard" />;
   }
 
+  const { logoutMutation } = useAuth();
+  
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-        <p className="text-slate-500">Manage challenges, quizzes, and view user data</p>
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+          <p className="text-slate-500">Manage challenges, quizzes, and view user data</p>
+        </div>
+        <Button 
+          onClick={handleLogout} 
+          variant="destructive"
+          className="flex items-center gap-2"
+        >
+          Logout
+        </Button>
       </div>
       <AdminTabs />
     </div>
