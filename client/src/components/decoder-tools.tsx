@@ -157,15 +157,41 @@ Y: -.--  Z: --..  0: ----- 1: .---- 2: ..--- 3: ...--
 
 function QRCodeScanner() {
   const [output, setOutput] = useState("[QR CONTENT WILL APPEAR HERE]");
+  const [isImage, setIsImage] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+  const [isLink, setIsLink] = useState(false);
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    // Reset states
+    setIsImage(false);
+    setImageUrl("");
+    setIsLink(false);
+    
     // In a real implementation, we would use a QR code reader library
-    // For the sake of demonstration, we'll just display a simulated result
+    // For the sake of demonstration, we'll simulate different content types
     setTimeout(() => {
-      setOutput('DECODED: "cybernetic_override_982"');
+      // Simulate different types of QR content
+      const demoContents = [
+        { type: 'text', content: 'cybernetic_override_982' },
+        { type: 'image', content: '/challenge-images/qr-reward.jpg' },
+        { type: 'link', content: '/challenges/bonus' }
+      ];
+      
+      const randomContent = demoContents[Math.floor(Math.random() * demoContents.length)];
+      
+      if (randomContent.type === 'image') {
+        setIsImage(true);
+        setImageUrl(randomContent.content);
+        setOutput(`DECODED: Image detected`);
+      } else if (randomContent.type === 'link') {
+        setIsLink(true);
+        setOutput(`DECODED: "${randomContent.content}"`);
+      } else {
+        setOutput(`DECODED: "${randomContent.content}"`);
+      }
     }, 500);
   };
   
@@ -191,6 +217,23 @@ function QRCodeScanner() {
         </CyberpunkButton>
         <div className="terminal-output text-sm p-2 font-tech-mono bg-cyber-black/80 border border-neon-blue/30 rounded-sm text-steel-blue">
           {output}
+          {isImage && (
+            <div className="mt-2">
+              <img src={imageUrl} alt="QR Code Content" className="max-w-full h-auto rounded" />
+            </div>
+          )}
+          {isLink && (
+            <div className="mt-2">
+              <CyberpunkButton
+                variant="accent"
+                size="sm"
+                onClick={() => window.location.href = output.slice(9, -1)}
+                className="text-sm w-full"
+              >
+                FOLLOW LINK
+              </CyberpunkButton>
+            </div>
+          )}
         </div>
       </div>
     </CyberpunkPanel>
