@@ -195,35 +195,35 @@ export class MemStorage implements IStorage {
     const defaultChallenges: InsertChallenge[] = [
       {
         title: "INIT_SEQUENCE",
-        description: "First challenge: Decode the initial access sequence in your assigned area. Group 1: Alpha123, Group 2: Eta789, Group 3: Nu345, Group 4: Tau901",
+        description: "Decode the initial access sequence in your assigned area.",
         answer: "group_specific",
         codeName: "Challenge 01: INIT_SEQUENCE",
         order: 1
       },
       {
         title: "CIPHER_BREAK",
-        description: "Second challenge: Decrypt the Caesar cipher message. Group 1: Beta234, Group 2: Theta890, Group 3: Xi456, Group 4: Upsilon012",
+        description: "Decrypt the Caesar cipher message.",
         answer: "group_specific",
         codeName: "Challenge 02: CIPHER_BREAK",
         order: 2
       },
       {
         title: "BINARY_DECODE",
-        description: "Third challenge: Convert the binary sequence. Group 1: Gamma345, Group 2: Iota901, Group 3: Omicron567, Group 4: Phi123",
+        description: "Convert the binary sequence.",
         answer: "group_specific",
         codeName: "Challenge 03: BINARY_DECODE",
         order: 3
       },
       {
         title: "NETWORK_BREACH",
-        description: "Fourth challenge: Scan the QR code in your area. Group 1: Delta456, Group 2: Kappa012, Group 3: Pi678, Group 4: Chi234",
+        description: "Scan the QR code in your area.",
         answer: "group_specific",
         codeName: "Challenge 04: NETWORK_BREACH",
         order: 4
       },
       {
         title: "FINAL_QUIZ",
-        description: "Final challenge: Complete your group's IT quiz. Group 1: Epsilon567, Group 2: Lambda123, Group 3: Rho789, Group 4: Psi345",
+        description: "Complete your group's IT quiz.",
         answer: "group_specific",
         codeName: "Challenge 05: FINAL_QUIZ",
         order: 5
