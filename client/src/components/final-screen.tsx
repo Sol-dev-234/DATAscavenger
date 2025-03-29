@@ -67,20 +67,42 @@ export function FinalScreen({ onRestart, completionTime = 0, groupCode = "1" }: 
         >
           <CyberpunkPanel className="p-6 mb-8" glow>
             <p className="font-tech-mono text-xl text-steel-blue mb-4">All challenges completed successfully!</p>
-            <p className="font-tech-mono text-steel-blue">
-              Final Score: <span className="text-neon-blue text-2xl">100%</span>
+            
+            <p className="font-tech-mono text-steel-blue mb-2">
+              Final Score: <span className={`${groupTextColor} text-2xl`}>100%</span>
             </p>
+            
+            {completionTime > 0 && (
+              <p className="font-tech-mono text-steel-blue mb-4">
+                Completion Time: <span className="text-neon-green text-xl font-bold tabular-nums">{formatTime(completionTime)}</span>
+              </p>
+            )}
             
             <div className="flex justify-center my-6">
               <StarRating totalStars={5} activeStar={5} />
             </div>
+            
+            {showFinalMsg && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="mt-4 p-3 border border-neon-green/30 bg-cyber-black/50 rounded"
+              >
+                <p className="font-orbitron text-neon-green text-lg mb-2 animate-pulse">QUICKLY TELL YOUR HOSTS!</p>
+                <p className="font-tech-mono text-steel-blue text-sm">
+                  Thank you for playing our game
+                  <span className={`${groupTextColor} mx-1`}>[Sol & Andrei]</span>
+                </p>
+              </motion.div>
+            )}
           </CyberpunkPanel>
         </motion.div>
         
         <motion.div
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.9, duration: 0.5 }}
+          transition={{ delay: 1.2, duration: 0.5 }}
         >
           <CyberpunkButton onClick={onRestart}>
             RESTART SIMULATION

@@ -101,7 +101,11 @@ export default function Dashboard() {
   };
   
   if (showVictory) {
-    return <FinalScreen onRestart={handleRestart} />;
+    return <FinalScreen 
+      onRestart={handleRestart} 
+      completionTime={elapsedTime}
+      groupCode={user?.groupCode} 
+    />;
   }
   
   return (

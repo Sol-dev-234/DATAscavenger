@@ -102,6 +102,16 @@
     color: #39ff14;
     text-shadow: 0 0 5px #39ff1480;
   }
+  
+  .text-neon-orange {
+    color: #ff7700;
+    text-shadow: 0 0 5px #ff770080;
+  }
+  
+  .text-neon-pink {
+    color: #ff00ff;
+    text-shadow: 0 0 5px #ff00ff80;
+  }
 
   .text-steel-blue {
     color: #7a98b8;
@@ -121,6 +131,14 @@
 
   .bg-neon-green {
     background-color: #39ff14;
+  }
+  
+  .bg-neon-orange {
+    background-color: #ff7700;
+  }
+  
+  .bg-neon-pink {
+    background-color: #ff00ff;
   }
 
   .border-neon-blue {
