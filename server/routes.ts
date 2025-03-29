@@ -86,7 +86,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const isCorrect = challenge.answer.toLowerCase() === answer.toLowerCase();
+      // Get group-specific answer for the final challenge (simulated)
+      let correctAnswer = challenge.answer.toLowerCase();
+      
+      // For challenge 5 (FINAL_QUIZ), we use group-specific answers
+      if (id === 5) {
+        // Group-specific answers for the final quiz challenge
+        const groupSpecificAnswers: Record<string, string> = {
+          "1": "mainframe",
+          "2": "database",
+          "3": "security",
+          "4": "networks"
+        };
+        
+        // If we have a group-specific answer, use it
+        const groupCode = user.groupCode?.toString() || "";
+        if (groupCode && groupSpecificAnswers[groupCode]) {
+          correctAnswer = groupSpecificAnswers[groupCode];
+        }
+      }
+      
+      const isCorrect = correctAnswer === answer.toLowerCase();
       
       if (isCorrect) {
         // Update user progress

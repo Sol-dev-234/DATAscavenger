@@ -10,6 +10,7 @@ import { DecoderTools } from "@/components/decoder-tools";
 import { SuccessModal } from "@/components/success-modal";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
+import { Challenge as ChallengeType } from "@shared/schema";
 
 export default function Challenge() {
   const params = useParams<{ id: string }>();
@@ -25,7 +26,7 @@ export default function Challenge() {
     data: challenge,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<ChallengeType>({
     queryKey: [`/api/challenges/${challengeId}`],
     enabled: !!challengeId && !isNaN(challengeId),
   });
@@ -94,9 +95,14 @@ export default function Challenge() {
             CYBER<span className="text-neon-purple">CHALLENGE</span> MAINFRAME
           </h1>
           <div className="flex items-center">
-            <span className="font-tech-mono text-steel-blue mr-3">
-              {user?.username.toUpperCase()}
-            </span>
+            <div className="flex flex-col items-end mr-3">
+              <span className="font-tech-mono text-steel-blue">
+                {user?.username.toUpperCase()}
+              </span>
+              <span className="font-tech-mono text-xs text-neon-purple">
+                GROUP {user?.groupCode}
+              </span>
+            </div>
             <span className="flex h-3 w-3 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-green opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-neon-green"></span>

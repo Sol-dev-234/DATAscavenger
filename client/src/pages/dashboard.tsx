@@ -8,6 +8,14 @@ import { CyberpunkProgress } from "@/components/ui/cyberpunk-progress";
 import { FinalScreen } from "@/components/final-screen";
 import { StarRating } from "@/components/star-rating";
 import { motion } from "framer-motion";
+import { Challenge, User } from "@shared/schema";
+
+interface ProgressData {
+  progress: number;
+  currentChallenge: number;
+  completedChallenges: string[];
+  userId: number;
+}
 
 export default function Dashboard() {
   const [showVictory, setShowVictory] = useState(false);
@@ -18,7 +26,7 @@ export default function Dashboard() {
     data: challenges,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<Challenge[]>({
     queryKey: ["/api/challenges"],
     enabled: !!user,
   });
@@ -26,7 +34,7 @@ export default function Dashboard() {
   const {
     data: progress,
     isLoading: isProgressLoading,
-  } = useQuery({
+  } = useQuery<ProgressData>({
     queryKey: ["/api/progress"],
     enabled: !!user,
     refetchInterval: 5000, // Refresh every 5 seconds
@@ -64,9 +72,14 @@ export default function Dashboard() {
             CYBER<span className="text-neon-purple">CHALLENGE</span> MAINFRAME
           </h1>
           <div className="flex items-center">
-            <span className="font-tech-mono text-steel-blue mr-3">
-              {user?.username.toUpperCase()}
-            </span>
+            <div className="flex flex-col items-end mr-3">
+              <span className="font-tech-mono text-steel-blue">
+                {user?.username.toUpperCase()}
+              </span>
+              <span className="font-tech-mono text-xs text-neon-purple">
+                GROUP {user?.groupCode}
+              </span>
+            </div>
             <button 
               onClick={handleLogout}
               className="text-neon-blue hover:text-neon-red mr-3 text-sm font-tech-mono"
@@ -96,8 +109,8 @@ export default function Dashboard() {
               <p className="text-red-500 font-tech-mono">Error loading challenges</p>
             ) : (
               challenges?.map((challenge, i) => {
-                const isActive = progress?.currentChallenge >= challenge.id;
-                const isCompleted = progress?.completedChallenges.includes(challenge.id.toString());
+                const isActive = (progress?.currentChallenge || 0) >= challenge.id;
+                const isCompleted = progress?.completedChallenges?.includes(challenge.id.toString()) || false;
                 
                 return (
                   <motion.div
@@ -141,7 +154,7 @@ export default function Dashboard() {
           <div className="pt-4">
             <StarRating 
               totalStars={5}
-              activeStar={progress?.completedChallenges.length || 0}
+              activeStar={progress?.completedChallenges?.length || 0}
             />
           </div>
         </CyberpunkPanel>

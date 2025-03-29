@@ -14,13 +14,13 @@ export interface IStorage {
   getChallenge(id: number): Promise<Challenge | undefined>;
   getAllChallenges(): Promise<Challenge[]>;
   createChallenge(challenge: InsertChallenge): Promise<Challenge>;
-  sessionStore: session.SessionStore;
+  sessionStore: session.Store;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private challenges: Map<number, Challenge>;
-  sessionStore: session.SessionStore;
+  sessionStore: session.Store;
   currentUserId: number;
   currentChallengeId: number;
 
@@ -42,35 +42,35 @@ export class MemStorage implements IStorage {
     const defaultChallenges: InsertChallenge[] = [
       {
         title: "INIT_SEQUENCE",
-        description: "The first challenge requires decoding the initial access sequence. Locate the access code and enter it below.",
+        description: "The first challenge requires decoding the initial access sequence. Group members, coordinate to find the hidden message in your assigned area and enter the access code below.",
         answer: "cyberstart",
         codeName: "Challenge 01: INIT_SEQUENCE",
         order: 1
       },
       {
         title: "CIPHER_BREAK",
-        description: "Decrypt the encoded message using Caesar Cipher to find the hidden password.",
+        description: "Decrypt the encoded message using Caesar Cipher to find the hidden password. Each group should focus on their assigned encryption key.",
         answer: "firewall",
         codeName: "Challenge 02: CIPHER_BREAK",
         order: 2
       },
       {
         title: "BINARY_DECODE",
-        description: "Convert the binary code to find the hidden password",
+        description: "Convert the binary code to find the hidden password. Group-specific binary sequences have been distributed around the area.",
         answer: "network",
         codeName: "Challenge 03: BINARY_DECODE",
         order: 3
       },
       {
         title: "NETWORK_BREACH",
-        description: "Analyze the QR code to find the access credentials.",
+        description: "Analyze the QR code to find the access credentials. Each group has a unique QR code in their designated area.",
         answer: "protocol",
         codeName: "Challenge 04: NETWORK_BREACH",
         order: 4
       },
       {
         title: "FINAL_QUIZ",
-        description: "Complete the IT quiz to finalize your mission.",
+        description: "Complete the IT quiz to finalize your mission. Each group will receive questions specific to their assigned BSIT topics.",
         answer: "mainframe",
         codeName: "Challenge 05: FINAL_QUIZ",
         order: 5

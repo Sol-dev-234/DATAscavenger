@@ -33,7 +33,9 @@ export default function AuthPage() {
   const registerSchema = insertUserSchema.extend({
     username: z.string().min(3, "Username must be at least 3 characters"),
     password: z.string().min(4, "Password must be at least 4 characters"),
-    groupCode: z.string().min(1, "Group code is required"),
+    groupCode: z.enum(["1", "2", "3", "4"], {
+      errorMap: () => ({ message: "Group code must be 1, 2, 3, or 4" }),
+    }),
   });
 
   // Login form setup
@@ -51,7 +53,7 @@ export default function AuthPage() {
     defaultValues: {
       username: "",
       password: "",
-      groupCode: "",
+      groupCode: undefined,
     },
   });
 
@@ -163,11 +165,17 @@ export default function AuthPage() {
                 <label htmlFor="group-code" className="block font-tech-mono text-steel-blue">
                   GROUP CODE:
                 </label>
-                <CyberpunkInput
+                <select
                   id="group-code"
                   {...registerForm.register("groupCode")}
-                  className="w-full rounded-sm"
-                />
+                  className="w-full rounded-sm bg-cyber-black border-2 border-neon-blue/50 text-steel-blue p-2 focus:outline-none focus:border-neon-blue font-tech-mono"
+                >
+                  <option value="" disabled>SELECT GROUP</option>
+                  <option value="1">GROUP 1</option>
+                  <option value="2">GROUP 2</option>
+                  <option value="3">GROUP 3</option>
+                  <option value="4">GROUP 4</option>
+                </select>
                 {registerForm.formState.errors.groupCode && (
                   <p className="text-xs text-red-500 font-tech-mono">
                     {registerForm.formState.errors.groupCode.message}
