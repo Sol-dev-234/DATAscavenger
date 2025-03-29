@@ -90,7 +90,6 @@ function AdminTabs() {
 function ChallengesManager() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [editingChallenge, setEditingChallenge] = useState<Challenge | null>(null);
   const [isAdding, setIsAdding] = useState(false);
 
   const { isLoading, data: challenges } = useQuery<Challenge[]>({
@@ -120,48 +119,8 @@ function ChallengesManager() {
     }
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, challenge }: { id: number, challenge: Partial<Challenge> }) => {
-      const res = await apiRequest('PUT', `/api/admin/challenges/${id}`, challenge);
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Challenge updated",
-        description: "The challenge was updated successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/challenges'] });
-      setEditingChallenge(null);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to update challenge",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await apiRequest('DELETE', `/api/admin/challenges/${id}`);
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Challenge deleted",
-        description: "The challenge was deleted successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/challenges'] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to delete challenge",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
+  // Challenge editing and deletion disabled
+  // Challenges contain prewritten passwords that must remain unchanged
 
   if (isLoading) {
     return (
@@ -189,14 +148,7 @@ function ChallengesManager() {
         />
       )}
 
-      {editingChallenge && (
-        <ChallengeForm 
-          challenge={editingChallenge}
-          onSubmit={(data) => updateMutation.mutate({ id: editingChallenge.id, challenge: data })}
-          onCancel={() => setEditingChallenge(null)}
-          isSubmitting={updateMutation.isPending}
-        />
-      )}
+      {/* Challenge editing is disabled as per requirements */}
 
       <div className="grid gap-4">
         {challenges?.map((challenge) => (
@@ -204,40 +156,13 @@ function ChallengesManager() {
             <CardHeader className="pb-2">
               <div className="flex justify-between">
                 <div>
-                  <CardTitle>{challenge.title}</CardTitle>
+                  <CardTitle>Challenge {challenge.id}</CardTitle>
                   <CardDescription>{challenge.codeName}</CardDescription>
                 </div>
                 <div className="flex space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={() => setEditingChallenge(challenge)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="icon">
-                        <Trash className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure you want to delete this challenge?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the challenge.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteMutation.mutate(challenge.id)}
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <span className="text-yellow-400 bg-yellow-900/20 px-3 py-1 rounded-full text-xs font-tech-mono">
+                    Password protected - Cannot be modified
+                  </span>
                 </div>
               </div>
             </CardHeader>
@@ -259,19 +184,17 @@ function ChallengesManager() {
 
 // Challenge form for adding/editing
 function ChallengeForm({ 
-  challenge, 
   onSubmit, 
   onCancel, 
   isSubmitting 
 }: { 
-  challenge?: Challenge,
   onSubmit: (data: z.infer<typeof insertChallengeSchema>) => void,
   onCancel: () => void,
   isSubmitting: boolean
 }) {
   const form = useForm<z.infer<typeof insertChallengeSchema>>({
     resolver: zodResolver(insertChallengeSchema),
-    defaultValues: challenge || {
+    defaultValues: {
       title: "",
       description: "",
       answer: "",
@@ -283,7 +206,7 @@ function ChallengeForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{challenge ? 'Edit Challenge' : 'Add Challenge'}</CardTitle>
+        <CardTitle>Add Challenge</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -364,7 +287,7 @@ function ChallengeForm({
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {challenge ? 'Update' : 'Create'}
+                Create
               </Button>
             </div>
           </form>
