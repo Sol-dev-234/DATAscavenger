@@ -7,6 +7,14 @@ import { z } from "zod";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
+  
+  // Define group passwords directly in the code
+  const groupPasswords: Record<string, string[]> = {
+    "group1": ["Alpha123", "Beta234", "Gamma345", "Delta456", "Epsilon567"],
+    "group2": ["Eta789", "Theta890", "Iota901", "Kappa012", "Lambda123"],
+    "group3": ["Nu345", "Xi456", "Omicron567", "Pi678", "Rho789"],
+    "group4": ["Tau901", "Upsilon012", "Phi123", "Chi234", "Psi345"]
+  };
 
   // Get all challenges
   app.get("/api/challenges", async (req, res) => {
@@ -86,27 +94,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Get group-specific answer for the final challenge (simulated)
-      let correctAnswer = challenge.answer.toLowerCase();
+      // Get the user's group
+      const groupNumber = user.groupCode?.toString() || "1";
+      const groupKey = `group${groupNumber}`;
       
-      // For challenge 5 (FINAL_QUIZ), we use group-specific answers
-      if (id === 5) {
-        // Group-specific answers for the final quiz challenge
-        const groupSpecificAnswers: Record<string, string> = {
-          "1": "mainframe",
-          "2": "database",
-          "3": "security",
-          "4": "networks"
-        };
-        
-        // If we have a group-specific answer, use it
-        const groupCode = user.groupCode?.toString() || "";
-        if (groupCode && groupSpecificAnswers[groupCode]) {
-          correctAnswer = groupSpecificAnswers[groupCode];
-        }
+      // Get the correct password for this challenge based on group and challenge ID
+      // Adjust challenge index for 0-based array (challenge IDs start at 1)
+      const challengeIndex = id - 1;
+      
+      let isCorrect = false;
+      
+      // Check if we have passwords for this group and challenge
+      if (groupPasswords[groupKey] && groupPasswords[groupKey][challengeIndex]) {
+        const correctPassword = groupPasswords[groupKey][challengeIndex];
+        // Compare case-sensitive password (as specified in passwords.json)
+        isCorrect = correctPassword === answer;
+      } else {
+        // Fallback to original answer checking
+        const correctAnswer = challenge.answer.toLowerCase();
+        isCorrect = correctAnswer === answer.toLowerCase();
       }
-      
-      const isCorrect = correctAnswer === answer.toLowerCase();
       
       if (isCorrect) {
         // Update user progress

@@ -38,32 +38,32 @@ function getGroupSpecificHint(challengeId: number, groupCode?: string | number) 
   const group = groupCode?.toString() || "1";
   const hints: Record<string, Record<number, string>> = {
     "1": {
-      1: "Look for hidden QR codes in blue marked areas. Binary might be useful.",
-      2: "The Caesar Cipher key for your group is 3. Shift letters forward.",
-      3: "Your binary sequence is hidden in the network diagram. Convert to ASCII.",
-      4: "Check near the computer lab entrance for your QR code.",
-      5: "Focus on networking and infrastructure questions in your quiz."
+      1: "Your first challenge password is: Alpha123 - Enter it exactly as shown.",
+      2: "For this challenge, use the password: Beta234 - Remember, it's case-sensitive.",
+      3: "The access code for this challenge is: Gamma345",
+      4: "To proceed, enter the password: Delta456",
+      5: "Final challenge password: Epsilon567 - Enter it to complete your mission!"
     },
     "2": {
-      1: "Search for clues in purple marked zones. Morse code could be helpful.",
-      2: "Your group's Caesar Cipher key is 5. Count forward in the alphabet.",
-      3: "Binary sequences for Group 2 are hidden on the bulletin board.",
-      4: "Your QR code is near the faculty room.",
-      5: "Database and storage questions will be prominent in your quiz."
+      1: "Your first challenge password is: Eta789 - Enter it exactly as shown.",
+      2: "For this challenge, use the password: Theta890 - Remember, it's case-sensitive.",
+      3: "The access code for this challenge is: Iota901",
+      4: "To proceed, enter the password: Kappa012",
+      5: "Final challenge password: Lambda123 - Enter it to complete your mission!"
     },
     "3": {
-      1: "Green areas contain your clues. Check for patterns in the text.",
-      2: "Group 3 uses Caesar Cipher key 7. Count seven letters ahead.",
-      3: "Binary code is hidden in the classroom projector screen.",
-      4: "Your QR code can be found near the library entrance.",
-      5: "Security and encryption topics will be your focus."
+      1: "Your first challenge password is: Nu345 - Enter it exactly as shown.",
+      2: "For this challenge, use the password: Xi456 - Remember, it's case-sensitive.",
+      3: "The access code for this challenge is: Omicron567",
+      4: "To proceed, enter the password: Pi678",
+      5: "Final challenge password: Rho789 - Enter it to complete your mission!"
     },
     "4": {
-      1: "Yellow markers show where to search. Numbers may have significance.",
-      2: "Your Caesar Cipher key is 9. Shift nine positions forward.",
-      3: "Look for binary sequences posted near the canteen.",
-      4: "Find your QR code around the student lounge area.",
-      5: "Artificial Intelligence and programming questions await your group."
+      1: "Your first challenge password is: Tau901 - Enter it exactly as shown.",
+      2: "For this challenge, use the password: Upsilon012 - Remember, it's case-sensitive.",
+      3: "The access code for this challenge is: Phi123",
+      4: "To proceed, enter the password: Chi234",
+      5: "Final challenge password: Psi345 - Enter it to complete your mission!"
     }
   };
   
@@ -157,7 +157,7 @@ export default function Challenge() {
               <span className="font-tech-mono text-steel-blue">
                 {user?.username.toUpperCase()}
               </span>
-              <span className="font-tech-mono text-xs text-neon-purple">
+              <span className={`font-tech-mono text-xs ${getGroupTextClass(user?.groupCode)}`}>
                 GROUP {user?.groupCode}
               </span>
             </div>
