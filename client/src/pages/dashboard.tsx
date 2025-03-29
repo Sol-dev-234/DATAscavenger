@@ -26,7 +26,13 @@ interface ProgressData {
   progress: number;
   currentChallenge: number;
   completedChallenges: string[];
-  userId: number;
+  completedQuiz: boolean;
+  lastQuizQuestion: number;
+  groupProgress: {
+    completedQuiz: boolean;
+    completionTime: number;
+    hasPhoto: boolean;
+  } | null;
 }
 
 export default function Dashboard() {
@@ -212,12 +218,45 @@ export default function Dashboard() {
             />
           </div>
           
+          {/* Quiz Status */}
+          <div className="mt-4 p-3 border border-neon-blue/30 rounded-sm">
+            <h3 className="font-orbitron text-neon-blue text-sm mb-2">QUIZ STATUS:</h3>
+            <div className="flex justify-between items-center">
+              <span className="font-tech-mono text-steel-blue">Personal:</span>
+              <span className={`font-tech-mono ${progress?.completedQuiz ? 'text-neon-green' : 'text-steel-blue'}`}>
+                {progress?.completedQuiz ? 'COMPLETED' : 
+                 (progress?.lastQuizQuestion && progress?.lastQuizQuestion > 1) ? `QUESTION ${progress?.lastQuizQuestion}/3` : 'NOT STARTED'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center mt-1">
+              <span className="font-tech-mono text-steel-blue">Group:</span>
+              <span className={`font-tech-mono ${progress?.groupProgress?.completedQuiz ? 'text-neon-green' : 'text-steel-blue'}`}>
+                {progress?.groupProgress?.completedQuiz ? 'COMPLETED' : 'IN PROGRESS'}
+              </span>
+            </div>
+          </div>
+          
+          {/* Group Photo Status */}
+          {progress?.groupProgress && (
+            <div className="mt-4 p-3 border border-neon-blue/30 rounded-sm">
+              <div className="flex justify-between items-center">
+                <h3 className="font-orbitron text-neon-blue text-sm">GROUP PHOTO:</h3>
+                <span className={`font-tech-mono ${progress?.groupProgress?.hasPhoto ? 'text-neon-green' : 'text-steel-blue'}`}>
+                  {progress?.groupProgress?.hasPhoto ? 'SAVED' : 'NOT TAKEN'}
+                </span>
+              </div>
+            </div>
+          )}
+          
+          {/* Timer */}
           {timerStarted && (
             <div className="mt-4 p-3 border border-neon-blue/30 rounded-sm">
               <div className="flex justify-between items-center">
                 <h3 className="font-orbitron text-neon-blue text-sm">MISSION TIME:</h3>
                 <span className="font-tech-mono text-neon-green text-xl tabular-nums">
-                  {formatTime(elapsedTime)}
+                  {formatTime(progress?.groupProgress?.completionTime ? 
+                    Math.floor(progress?.groupProgress?.completionTime / 1000) : 
+                    elapsedTime)}
                 </span>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
@@ -8,6 +8,7 @@ import { CyberpunkButton } from "@/components/ui/cyberpunk-button";
 import { CyberpunkInput } from "@/components/ui/cyberpunk-input";
 import { DecoderTools } from "@/components/decoder-tools";
 import { SuccessModal } from "@/components/success-modal";
+import { QuizGame } from "@/components/quiz-game";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { Challenge as ChallengeType } from "@shared/schema";
@@ -78,6 +79,24 @@ export default function Challenge() {
   const [answer, setAnswer] = useState("");
   const [successOpen, setSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [quizCompleted, setQuizCompleted] = useState(false);
+  
+  // Determine if this is the quiz challenge (challenge 5)
+  const isQuizChallenge = challengeId === 5;
+  
+  // Define the expected progress data type
+  interface ProgressData {
+    completedQuiz: boolean;
+    lastQuizQuestion?: number;
+    completedChallenges: string[];
+    progress: number;
+  }
+  
+  // Fetch user's progress for quiz status
+  const { data: progressData } = useQuery<ProgressData>({
+    queryKey: ["/api/progress"],
+    enabled: isQuizChallenge
+  });
   
   // Fetch challenge details
   const {
@@ -88,6 +107,13 @@ export default function Challenge() {
     queryKey: [`/api/challenges/${challengeId}`],
     enabled: !!challengeId && !isNaN(challengeId),
   });
+  
+  // Initialize quiz completed state based on user data
+  useEffect(() => {
+    if (isQuizChallenge && progressData) {
+      setQuizCompleted(!!progressData.completedQuiz);
+    }
+  }, [isQuizChallenge, progressData]);
   
   // Mutation for verifying answers
   const verifyMutation = useMutation({
@@ -119,6 +145,16 @@ export default function Challenge() {
   const handleSuccessClose = () => {
     setSuccessOpen(false);
     navigate("/");
+  };
+  
+  const handleQuizComplete = () => {
+    setQuizCompleted(true);
+    setSuccessMessage("Quiz completed successfully! You've answered all questions correctly.");
+    setSuccessOpen(true);
+    
+    // Invalidate queries to update the UI
+    queryClient.invalidateQueries({ queryKey: ["/api/progress"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/challenges"] });
   };
   
   if (isLoading) {
@@ -177,61 +213,134 @@ export default function Challenge() {
               {challenge.codeName}
             </h2>
             
-            <div className="terminal-output mb-4 font-tech-mono bg-cyber-black/80 border border-neon-blue/30 rounded-sm text-steel-blue p-4">
-              <p>$ SYSTEM BOOT SEQUENCE INITIATED</p>
-              <p>$ LOADING CORE SYSTEMS...</p>
-              <p>$ INITIALIZING NEURAL INTERFACE...</p>
-              <p>$ WARNING: SECURITY PROTOCOL REQUIRES AUTHENTICATION</p>
-              <p>$ ENTER ACCESS CODE TO PROCEED</p>
-            </div>
-            
-            <p className="font-tech-mono text-steel-blue mb-4">
-              {challenge.description}
-            </p>
-            
-            <form onSubmit={handleSubmit} className="mb-6">
-              <label htmlFor="challenge-input" className="block font-tech-mono text-steel-blue mb-2">
-                ACCESS CODE:
-              </label>
-              <div className="flex">
-                <CyberpunkInput
-                  id="challenge-input"
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  className="flex-1 mr-2"
-                  placeholder="ENTER CODE"
-                />
-                <CyberpunkButton 
-                  type="submit"
-                  disabled={verifyMutation.isPending}
-                >
-                  {verifyMutation.isPending ? "VERIFYING..." : "VERIFY"}
-                </CyberpunkButton>
-              </div>
-              
-              {verifyMutation.isError && (
-                <p className="mt-2 text-red-500 font-tech-mono text-sm">
-                  Error: Could not verify answer. Please try again.
+            {isQuizChallenge ? (
+              <>
+                {quizCompleted ? (
+                  <div className="text-center p-6">
+                    <p className="font-orbitron text-neon-green text-xl mb-4">Quiz Successfully Completed!</p>
+                    <p className="font-tech-mono text-steel-blue mb-6">
+                      You've answered all the IT knowledge questions correctly. 
+                      To proceed, you'll need to verify with the access code.
+                    </p>
+                    
+                    <form onSubmit={handleSubmit} className="max-w-md mx-auto">
+                      <label htmlFor="challenge-input" className="block font-tech-mono text-steel-blue mb-2">
+                        ACCESS CODE:
+                      </label>
+                      <div className="flex">
+                        <CyberpunkInput
+                          id="challenge-input"
+                          value={answer}
+                          onChange={(e) => setAnswer(e.target.value)}
+                          className="flex-1 mr-2"
+                          placeholder="ENTER CODE"
+                        />
+                        <CyberpunkButton 
+                          type="submit"
+                          disabled={verifyMutation.isPending}
+                        >
+                          {verifyMutation.isPending ? "VERIFYING..." : "VERIFY"}
+                        </CyberpunkButton>
+                      </div>
+                      
+                      {verifyMutation.isError && (
+                        <p className="mt-2 text-red-500 font-tech-mono text-sm">
+                          Error: Could not verify answer. Please try again.
+                        </p>
+                      )}
+                      
+                      {verifyMutation.data && !verifyMutation.data.correct && (
+                        <p className="mt-2 text-red-500 font-tech-mono text-sm">
+                          {verifyMutation.data.message}
+                        </p>
+                      )}
+                    </form>
+                    
+                    <div className={`mt-6 p-3 border ${getGroupBorderClass(user?.groupCode)} rounded-sm`}>
+                      <h3 className={`font-orbitron ${getGroupTextClass(user?.groupCode)} mb-2 text-sm`}>GROUP {user?.groupCode} HINT:</h3>
+                      <p className="font-tech-mono text-sm text-steel-blue">
+                        {getGroupSpecificHint(challengeId, user?.groupCode)}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  // Quiz interface
+                  <div className="p-4">
+                    <div className="terminal-output mb-4 font-tech-mono bg-cyber-black/80 border border-neon-blue/30 rounded-sm text-steel-blue p-4">
+                      <p>$ SYSTEM BOOT SEQUENCE INITIATED</p>
+                      <p>$ LOADING KNOWLEDGE VERIFICATION PROTOCOL...</p>
+                      <p>$ WARNING: MULTIPLE TESTS REQUIRED TO PROCEED</p>
+                      <p>$ ANSWER ALL QUESTIONS CORRECTLY TO GAIN ACCESS</p>
+                    </div>
+                    
+                    <p className="font-tech-mono text-steel-blue mb-6">
+                      {challenge.description}
+                    </p>
+                    
+                    <QuizGame onComplete={handleQuizComplete} />
+                  </div>
+                )}
+              </>
+            ) : (
+              // Regular challenge interface
+              <>
+                <div className="terminal-output mb-4 font-tech-mono bg-cyber-black/80 border border-neon-blue/30 rounded-sm text-steel-blue p-4">
+                  <p>$ SYSTEM BOOT SEQUENCE INITIATED</p>
+                  <p>$ LOADING CORE SYSTEMS...</p>
+                  <p>$ INITIALIZING NEURAL INTERFACE...</p>
+                  <p>$ WARNING: SECURITY PROTOCOL REQUIRES AUTHENTICATION</p>
+                  <p>$ ENTER ACCESS CODE TO PROCEED</p>
+                </div>
+                
+                <p className="font-tech-mono text-steel-blue mb-4">
+                  {challenge.description}
                 </p>
-              )}
-              
-              {verifyMutation.data && !verifyMutation.data.correct && (
-                <p className="mt-2 text-red-500 font-tech-mono text-sm">
-                  {verifyMutation.data.message}
-                </p>
-              )}
-            </form>
-            
-            <div className={`mt-6 p-3 border ${getGroupBorderClass(user?.groupCode)} rounded-sm`}>
-              <h3 className={`font-orbitron ${getGroupTextClass(user?.groupCode)} mb-2 text-sm`}>GROUP {user?.groupCode} HINT:</h3>
-              <p className="font-tech-mono text-sm text-steel-blue">
-                {getGroupSpecificHint(challengeId, user?.groupCode)}
-              </p>
-            </div>
+                
+                <form onSubmit={handleSubmit} className="mb-6">
+                  <label htmlFor="challenge-input" className="block font-tech-mono text-steel-blue mb-2">
+                    ACCESS CODE:
+                  </label>
+                  <div className="flex">
+                    <CyberpunkInput
+                      id="challenge-input"
+                      value={answer}
+                      onChange={(e) => setAnswer(e.target.value)}
+                      className="flex-1 mr-2"
+                      placeholder="ENTER CODE"
+                    />
+                    <CyberpunkButton 
+                      type="submit"
+                      disabled={verifyMutation.isPending}
+                    >
+                      {verifyMutation.isPending ? "VERIFYING..." : "VERIFY"}
+                    </CyberpunkButton>
+                  </div>
+                  
+                  {verifyMutation.isError && (
+                    <p className="mt-2 text-red-500 font-tech-mono text-sm">
+                      Error: Could not verify answer. Please try again.
+                    </p>
+                  )}
+                  
+                  {verifyMutation.data && !verifyMutation.data.correct && (
+                    <p className="mt-2 text-red-500 font-tech-mono text-sm">
+                      {verifyMutation.data.message}
+                    </p>
+                  )}
+                </form>
+                
+                <div className={`mt-6 p-3 border ${getGroupBorderClass(user?.groupCode)} rounded-sm`}>
+                  <h3 className={`font-orbitron ${getGroupTextClass(user?.groupCode)} mb-2 text-sm`}>GROUP {user?.groupCode} HINT:</h3>
+                  <p className="font-tech-mono text-sm text-steel-blue">
+                    {getGroupSpecificHint(challengeId, user?.groupCode)}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
           
-          {/* Tools Panel */}
-          <DecoderTools />
+          {/* Tools Panel - only shown for non-quiz challenges */}
+          {!isQuizChallenge && <DecoderTools />}
         </CyberpunkPanel>
       </div>
       
