@@ -60,7 +60,7 @@ export function CreditScreen({ onComplete }: CreditScreenProps) {
                 transition={{ delay: 1.8, duration: 0.5 }}
                 className="text-steel-blue text-sm"
               >
-                created by Sol Esther and John Andrei Data Club Officers
+                created by Sol Esther and John Andrei | BSIT
               </motion.p>
             </div>
           </motion.div>

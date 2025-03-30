@@ -54,7 +54,7 @@ export function IntroScreen({ onComplete }: IntroScreenProps) {
             />
           </div>
           <p className="mt-6 text-neon-purple font-tech-mono text-sm">
-            CREATED BY: <span className="text-neon-blue">CyberTrainer Team</span>
+            CREATED BY: <span className="text-neon-blue">Sol Esther and John Andrei | BSIT</span>
           </p>
         </div>
       </motion.div>
