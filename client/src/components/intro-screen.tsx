@@ -42,7 +42,7 @@ export function IntroScreen({ onComplete }: IntroScreenProps) {
       >
         <div className="text-center p-8">
           <h1 className="font-orbitron text-4xl md:text-6xl text-neon-blue mb-4 animate-pulse-slow">
-            CYBER<span className="text-neon-purple">CHALLENGE</span>
+            DATA<span className="text-neon-purple">CLUB</span>
           </h1>
           <p className="font-tech-mono text-steel-blue text-xl mb-8">INITIALIZING SYSTEM...</p>
           <div className="w-64 h-2 bg-gray-800 rounded-full mx-auto overflow-hidden">
