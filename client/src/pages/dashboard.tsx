@@ -1,20 +1,40 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
-import { CyberpunkPanel } from "@/components/ui/cyberpunk-panel";
-import { CyberpunkButton } from "@/components/ui/cyberpunk-button";
-import { CyberpunkProgress } from "@/components/ui/cyberpunk-progress";
-import { FinalScreen } from "@/components/final-screen";
-import { StarRating } from "@/components/star-rating";
-import { CreditScreen } from "@/components/credit-screen";
+import { getQueryFn } from "@/lib/queryClient";
 import { motion } from "framer-motion";
-import { Challenge, User } from "@shared/schema";
-import { GroupMembers } from "@/components/group-members";
+import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { Loader2 } from "lucide-react";
+import { Challenge, User, GroupProgress } from "@shared/schema";
 
-// Helper function for group-specific text styling
+interface ProgressData {
+  currentChallenge: number;
+  completedChallenges: string[];
+  progress: number;
+  completedQuiz: boolean;
+  lastQuizQuestion: number;
+  groupProgress?: {
+    allMembersCompleted?: boolean;
+    completedQuiz?: boolean;
+    hasPhoto?: boolean;
+    completionTime?: number;
+  };
+}
+
+// Components
+import { CyberpunkButton } from "@/components/ui/cyberpunk-button";
+import { CyberpunkPanel } from "@/components/ui/cyberpunk-panel";
+import { CyberpunkProgress } from "@/components/ui/cyberpunk-progress";
+import { StarRating } from "@/components/star-rating";
+import { FinalScreen } from "@/components/final-screen";
+import { CreditScreen } from "@/components/credit-screen";
+import { GroupMembers } from "@/components/group-members";
+import { CelebrationModal } from "@/components/celebration-modal";
+
 function getGroupTextClass(groupCode?: string | number) {
-  switch(groupCode?.toString()) {
+  if (!groupCode) return "text-neon-blue";
+  
+  switch (groupCode.toString()) {
     case "1": return "text-neon-blue";
     case "2": return "text-neon-purple";
     case "3": return "text-neon-orange";
@@ -23,77 +43,72 @@ function getGroupTextClass(groupCode?: string | number) {
   }
 }
 
-interface ProgressData {
-  progress: number;
-  currentChallenge: number;
-  completedChallenges: string[];
-  completedQuiz: boolean;
-  lastQuizQuestion: number;
-  groupProgress: {
-    completedQuiz: boolean;
-    completionTime: number;
-    hasPhoto: boolean;
-    allMembersCompleted: boolean;
-  } | null;
-}
-
 export default function Dashboard() {
-  const [showVictory, setShowVictory] = useState(false);
-  const [showCredits, setShowCredits] = useState(true);
   const [, navigate] = useLocation();
   const { user, logoutMutation } = useAuth();
+  const [showVictory, setShowVictory] = useState(false);
+  const [showCredits, setShowCredits] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [timerStarted, setTimerStarted] = useState(false);
-  
-  const {
-    data: challenges,
-    isLoading,
-    error,
-  } = useQuery<Challenge[]>({
-    queryKey: ["/api/challenges"],
-    enabled: !!user,
-  });
-  
-  const {
-    data: progress,
-    isLoading: isProgressLoading,
-  } = useQuery<ProgressData>({
-    queryKey: ["/api/progress"],
-    enabled: !!user,
-    refetchInterval: 5000, // Refresh every 5 seconds
-  });
-  
-  // Check if user has completed all challenges and if all group members have completed
-  useEffect(() => {
-    // Show victory screen only if:
-    // 1. User has completed all challenges (progress === 100)
-    // 2. ALL group members have completed the quiz (allMembersCompleted)
-    if (progress?.progress === 100 && progress?.groupProgress?.allMembersCompleted) {
-      setShowVictory(true);
-    }
-  }, [progress]);
-  
-  // Timer logic with proper cleanup and memoization
-  const formatTime = useCallback((seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }, []);
+  const [showCelebration, setShowCelebration] = useState(false);
 
-  useEffect(() => {
-    // Don't show credits initially if user has progress
-    if (progress?.completedChallenges?.length > 0) {
-      setShowCredits(false);
-    }
+  // Fetch user progress
+  const { data: progress, isLoading, error } = useQuery<ProgressData>({
+    queryKey: ['/api/progress'],
+    queryFn: getQueryFn({ on401: 'throw' }),
+    refetchInterval: 5000 // Refetch every 5 seconds
+  });
 
-    // Start timer when first challenge is completed
-    if (progress?.completedChallenges?.length && !timerStarted) {
+  // Fetch available challenges
+  const { data: challenges } = useQuery<Challenge[]>({
+    queryKey: ['/api/challenges'],
+    queryFn: getQueryFn({ on401: 'throw' })
+  });
+
+  // Check if all members of the group have completed their challenges
+  useEffect(() => {
+    if (progress?.groupProgress?.allMembersCompleted && progress?.completedQuiz) {
+      // All members of the group have completed all challenges and the quiz
+      setShowCelebration(true);
+      
+      // Store this in localStorage so it persists between sessions
+      localStorage.setItem('celebration-shown', 'true');
+      localStorage.setItem('user-group-code', user?.groupCode || '');
+    }
+  }, [progress?.groupProgress?.allMembersCompleted, progress?.completedQuiz, user?.groupCode]);
+
+  // Check localStorage on mount to see if we should show the celebration
+  useEffect(() => {
+    const celebrationShown = localStorage.getItem('celebration-shown') === 'true';
+    const userGroupCode = localStorage.getItem('user-group-code');
+    
+    if (celebrationShown && userGroupCode === user?.groupCode && progress?.completedQuiz) {
+      setShowCelebration(true);
+    }
+  }, [user?.groupCode, progress?.completedQuiz]);
+
+  // Start timer if user has started but not completed challenges
+  useEffect(() => {
+    if (progress?.completedChallenges && progress?.completedChallenges.length > 0 && progress?.progress < 100) {
       setTimerStarted(true);
     }
     
-    const shouldRunTimer = timerStarted && (progress?.progress || 0) < 100;
-    
-    if (!shouldRunTimer) return;
+    // Auto-show victory screen when all challenges are completed
+    if (progress?.progress === 100 && progress?.completedQuiz && progress?.groupProgress?.allMembersCompleted) {
+      setShowVictory(true);
+    }
+  }, [progress?.completedChallenges, progress?.progress, progress?.completedQuiz, progress?.groupProgress?.allMembersCompleted]);
+  
+  // Format time as mm:ss
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+  
+  // Timer logic
+  useEffect(() => {
+    if (!timerStarted || progress?.progress === 100) return;
     
     const interval = setInterval(() => {
       setElapsedTime(prev => prev + 1);
@@ -102,25 +117,27 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [progress?.completedChallenges, progress?.progress, timerStarted]);
   
-  // Format time function (already declared above)
-  
   const handleLogout = () => {
     logoutMutation.mutate();
   };
-  
+
   const handleChallengeClick = (challengeId: number) => {
     navigate(`/challenge/${challengeId}`);
   };
-  
+
   const handleRestart = () => {
     setShowVictory(false);
     navigate("/");
   };
-  
+
   const handleCreditsComplete = () => {
     setShowCredits(false);
   };
   
+  const handleCloseCelebration = () => {
+    setShowCelebration(false);
+  };
+
   if (showVictory) {
     return <FinalScreen 
       onRestart={handleRestart} 
@@ -128,11 +145,11 @@ export default function Dashboard() {
       groupCode={user?.groupCode} 
     />;
   }
-  
+
   if (showCredits) {
     return <CreditScreen onComplete={handleCreditsComplete} />;
   }
-  
+
   return (
     <div className="flex-col flex-1 flex">
       <header className="border-b border-neon-blue/30 bg-cyber-black/80 py-3 px-4">
@@ -321,6 +338,13 @@ export default function Dashboard() {
           </div>
         </CyberpunkPanel>
       </div>
+      
+      {/* Celebration Modal */}
+      <CelebrationModal 
+        isOpen={showCelebration}
+        onClose={handleCloseCelebration}
+        groupCode={user?.groupCode || "1"}
+      />
     </div>
   );
 }
