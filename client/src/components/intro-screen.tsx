@@ -7,7 +7,7 @@ interface IntroScreenProps {
 
 export function IntroScreen({ onComplete }: IntroScreenProps) {
   const [progress, setProgress] = useState(0);
-  
+
   useEffect(() => {
     let mounted = true;
     const interval = setInterval(() => {
@@ -25,13 +25,13 @@ export function IntroScreen({ onComplete }: IntroScreenProps) {
         });
       }
     }, 300);
-    
+
     return () => {
       mounted = false;
       clearInterval(interval);
     };
   }, [onComplete]);
-  
+
   return (
     <AnimatePresence>
       <motion.div 
@@ -54,8 +54,9 @@ export function IntroScreen({ onComplete }: IntroScreenProps) {
             />
           </div>
           <p className="mt-6 text-neon-purple font-tech-mono text-sm">
-            CREATED BY: <span className="text-neon-blue">Sol Esther and John Andrei | BSIT</span>
+            CREATED BY: <span className="text-neon-blue">Sol Esther and John Andrei | DATA CLUB</span>
           </p>
+          <p className="mt-2 text-neon-yellow text-xs italic">"Teamwork is the Key, Godbless"</p>
         </div>
       </motion.div>
     </AnimatePresence>
