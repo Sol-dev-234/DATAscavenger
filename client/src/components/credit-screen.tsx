@@ -1,5 +1,6 @@
+
+import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface CreditScreenProps {
   onComplete: () => void;
@@ -45,31 +46,22 @@ export function CreditScreen({ onComplete }: CreditScreenProps) {
             </h1>
             
             <div className="font-tech-mono mt-10 mb-2">
-              <p className="text-steel-blue mb-6">Created by:</p>
               <motion.p 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.2, duration: 0.5 }}
-                className="text-neon-green text-xl mb-2"
+                className="text-neon-green text-xl mb-6"
               >
-                Sol Esther
-              </motion.p>
-              <motion.p 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.4, duration: 0.5 }}
-                className="text-steel-blue text-sm mb-4"
-              >
-                Data Club VP
+                Teamwork is the key, Godbless
               </motion.p>
               
               <motion.p 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.8, duration: 0.5 }}
-                className="text-neon-green text-xl mb-2"
+                className="text-steel-blue text-sm"
               >
-                John Andrei
+                created by Sol Esther and John Andrei
               </motion.p>
               <motion.p 
                 initial={{ opacity: 0 }}
@@ -77,7 +69,7 @@ export function CreditScreen({ onComplete }: CreditScreenProps) {
                 transition={{ delay: 2.0, duration: 0.5 }}
                 className="text-steel-blue text-sm"
               >
-                Data Club President
+                Data Club Officers
               </motion.p>
             </div>
           </motion.div>
