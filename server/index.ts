@@ -66,5 +66,18 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+  }).on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      log(`Port ${port} is busy, attempting to close existing connections...`);
+      require('child_process').exec(`lsof -i :${port} | grep LISTEN | awk '{print $2}' | xargs kill -9`, 
+        (err: any) => {
+          if (!err) {
+            log(`Port ${port} cleared, restarting server...`);
+            server.listen(port, '0.0.0.0');
+          } else {
+            log(`Failed to clear port ${port}. Please restart the repl.`);
+          }
+      });
+    }
   });
 })();
