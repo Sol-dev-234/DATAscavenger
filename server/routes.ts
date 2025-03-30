@@ -256,17 +256,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const completed = isLastQuestion && isCorrect;
       
       // Update the user's quiz progress
-      const nextIndex = isCorrect ? Math.min(3, index + 1) : index;
+      let nextIndex = index;
+      if (isCorrect) {
+        nextIndex = Math.min(3, index + 1);
+      }
+      
       const updatedUser = await storage.updateUserQuizProgress(user.id, nextIndex, completed);
       
       if (!updatedUser) {
         return res.status(500).json({ message: "Failed to update progress" });
       }
       
-      // If the user completed the quiz, check if all users in the group have completed
+      // If the user completed the quiz, update the group progress
       if (completed) {
-        // Mark the group's quiz as completed
-        await storage.updateGroupCompletion(user.groupCode, Date.now());
+        try {
+          // Mark the group's quiz as completed with the current timestamp
+          await storage.updateGroupCompletion(user.groupCode, Date.now());
+        } catch (groupError) {
+          console.error("Error updating group completion:", groupError);
+          // Don't fail the entire request if group update fails
+        }
       }
       
       return res.json({
@@ -278,6 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         nextIndex: updatedUser.lastQuizQuestion
       });
     } catch (error) {
+      console.error("Quiz answer error:", error);
       res.status(500).json({ message: "Failed to verify answer" });
     }
   });
@@ -323,20 +333,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user as Express.User;
       const groupProgress = await storage.getGroupProgress(user.groupCode);
       
+      // Get all group members to check if everyone has completed the quiz
+      const allGroupMembers = await storage.getAllUsers();
+      const groupMembers = allGroupMembers.filter(member => member.groupCode === user.groupCode);
+      const allMembersCompleted = groupMembers.length > 0 && groupMembers.every(member => member.completedQuiz);
+      
       if (!groupProgress) {
         return res.json({
           completedQuiz: false,
           completionTime: 0,
-          hasPhoto: false
+          hasPhoto: false,
+          allMembersCompleted
         });
       }
       
+      // Read and get the gallery photos for the group
       return res.json({
         completedQuiz: groupProgress.completedQuiz,
         completionTime: groupProgress.completionTime,
-        hasPhoto: !!groupProgress.groupPhoto
+        hasPhoto: !!groupProgress.groupPhoto,
+        allMembersCompleted
       });
     } catch (error) {
+      console.error("Error fetching group progress:", error);
       res.status(500).json({ message: "Failed to fetch group progress" });
     }
   });

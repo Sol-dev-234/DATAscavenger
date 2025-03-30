@@ -131,7 +131,7 @@ function ChallengesManager() {
             <CardContent>
               <div className="space-y-2">
                 <p className="text-sm">{challenge.description}</p>
-                <Alert variant="warning" className="bg-gray-950/50 border border-amber-600/30">
+                <Alert className="bg-gray-950/50 border border-amber-600/30">
                   <AlertCircle className="h-4 w-4 text-amber-500" />
                   <AlertTitle className="text-amber-500 text-xs">Group-Specific Passwords</AlertTitle>
                   <AlertDescription className="text-xs text-gray-400">

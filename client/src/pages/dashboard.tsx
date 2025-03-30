@@ -33,6 +33,7 @@ interface ProgressData {
     completedQuiz: boolean;
     completionTime: number;
     hasPhoto: boolean;
+    allMembersCompleted: boolean;
   } | null;
 }
 
@@ -62,9 +63,12 @@ export default function Dashboard() {
     refetchInterval: 5000, // Refresh every 5 seconds
   });
   
-  // Check if user has completed all challenges
+  // Check if user has completed all challenges and if all group members have completed
   useEffect(() => {
-    if (progress?.progress === 100) {
+    // Show victory screen only if:
+    // 1. User has completed all challenges (progress === 100)
+    // 2. ALL group members have completed the quiz (allMembersCompleted)
+    if (progress?.progress === 100 && progress?.groupProgress?.allMembersCompleted) {
       setShowVictory(true);
     }
   }, [progress]);
@@ -244,6 +248,15 @@ export default function Dashboard() {
                 {progress?.groupProgress?.completedQuiz ? 'COMPLETED' : 'IN PROGRESS'}
               </span>
             </div>
+            
+            {/* Notice when quiz is completed but waiting for group members */}
+            {progress?.progress === 100 && !progress?.groupProgress?.allMembersCompleted && (
+              <div className="mt-2 border-t border-neon-blue/20 pt-2">
+                <p className="font-tech-mono text-neon-orange text-sm animate-pulse">
+                  Waiting for all group members to complete challenges...
+                </p>
+              </div>
+            )}
           </div>
           
           {/* Group Photo Status */}

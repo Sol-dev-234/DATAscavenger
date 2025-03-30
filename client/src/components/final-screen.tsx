@@ -20,6 +20,8 @@ interface GroupProgressData {
   completedQuiz: boolean;
   completionTime: number;
   hasPhoto: boolean;
+  allMembersCompleted: boolean;
+  groupPhoto?: string;
 }
 
 function getGroupTextClass(groupCode?: string | number) {
@@ -179,11 +181,21 @@ export function FinalScreen({ onRestart, completionTime = 0, groupCode = "1" }: 
                     transition={{ duration: 0.5 }}
                     className="mt-4 p-3 border border-neon-green/30 bg-cyber-black/50 rounded"
                   >
-                    <p className="font-orbitron text-neon-green text-lg mb-2 animate-pulse">QUICKLY TELL YOUR HOSTS!</p>
-                    <p className="font-tech-mono text-steel-blue text-sm">
+                    <p className="font-orbitron text-neon-green text-lg mb-2 animate-pulse">
+                      QUICKLY TELL YOUR HOSTS!
+                    </p>
+                    <p className="font-tech-mono text-steel-blue text-sm mb-2">
+                      Congratulations, Group {groupCode}! All team members have completed the challenges!
+                    </p>
+                    <p className="font-tech-mono text-steel-blue text-xs">
                       Thank you for playing our game
                       <span className={`${groupTextColor} mx-1`}>[Sol & Andrei]</span>
                     </p>
+                    
+                    {/* Stars animation for final celebration */}
+                    <div className="mt-3">
+                      <StarRating totalStars={5} activeStar={5} className="scale-125" />
+                    </div>
                   </motion.div>
                 )}
               </CyberpunkPanel>
@@ -200,16 +212,36 @@ export function FinalScreen({ onRestart, completionTime = 0, groupCode = "1" }: 
                 {hasPhoto ? (
                   <div className="text-center">
                     <p className="font-tech-mono text-neon-green text-xl mb-6">Group Photo Saved!</p>
-                    <div className="bg-black/50 p-8 rounded-lg border border-gray-700 flex items-center justify-center">
-                      <CheckCircle className="h-16 w-16 text-neon-green" />
+                    <div className="bg-black/50 p-4 rounded-lg border border-gray-700 flex items-center justify-center">
+                      {groupProgress?.groupPhoto ? (
+                        <img 
+                          src={groupProgress.groupPhoto} 
+                          alt="Group Photo" 
+                          className="max-w-full rounded shadow-lg border border-gray-700"
+                          style={{ maxHeight: '50vh' }}
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center p-8">
+                          <CheckCircle className="h-16 w-16 text-neon-green mb-3" />
+                          <p className="font-tech-mono text-steel-blue">
+                            Photo saved successfully!
+                          </p>
+                        </div>
+                      )}
                     </div>
                     <p className="font-tech-mono text-gray-400 mt-4">
-                      Your group photo has been stored in our system!
+                      Your group achievement has been recorded!
+                    </p>
+                    <p className="font-tech-mono text-neon-green text-sm mt-2">
+                      Congratulations on completing all challenges as a team!
                     </p>
                   </div>
                 ) : (
                   <>
-                    <p className="font-orbitron text-neon-green text-xl mb-6">Take a Group Photo</p>
+                    <p className="font-orbitron text-neon-green text-xl mb-3">Take a Group Photo</p>
+                    <p className="font-tech-mono text-steel-blue mb-6">
+                      Celebrate your achievement! Take a picture together with your group.
+                    </p>
                     <WebcamCapture onPhotoCaptured={handlePhotoCaptured} />
                   </>
                 )}
