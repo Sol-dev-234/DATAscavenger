@@ -44,6 +44,7 @@ export interface IStorage {
   updateQuiz(id: number, updateQuiz: Partial<InsertQuiz>): Promise<Quiz | undefined>;
   deleteQuiz(id: number): Promise<boolean>;
   getAllUsers(): Promise<User[]>;
+  deleteUser(id: number): Promise<boolean>;
   
   sessionStore: session.Store;
 }
@@ -373,6 +374,23 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values());
   }
   
+  async deleteUser(id: number): Promise<boolean> {
+    // Get the user before deleting to clear their contribution from group data
+    const user = this.users.get(id);
+    if (!user) return false;
+    
+    // Delete the user
+    const success = this.users.delete(id);
+    
+    // If the user was part of a group, update group progress data
+    if (success && user.groupCode && user.groupCode !== 'admin') {
+      // We don't need to do anything else for MemStorage as the group progress
+      // is calculated dynamically based on the current users list
+    }
+    
+    return success;
+  }
+  
   async updateUserQuizProgress(userId: number, questionIndex: number, completed = false): Promise<User | undefined> {
     const user = this.users.get(userId);
     if (!user) return undefined;
@@ -668,6 +686,25 @@ export class DatabaseStorage implements IStorage {
 
   async deleteQuiz(id: number): Promise<boolean> {
     const result = await db.delete(quizzes).where(eq(quizzes.id, id)).returning();
+    return result.length > 0;
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    // Get the user before deleting to know the group code
+    const userResult = await db.select().from(users).where(eq(users.id, id));
+    if (userResult.length === 0) return false;
+    
+    const user = userResult[0];
+    
+    // Don't allow admin users to be deleted
+    if (user.isAdmin) return false;
+    
+    // Delete the user
+    const result = await db.delete(users).where(eq(users.id, id)).returning();
+    
+    // The group progress will automatically update on next fetch since we
+    // calculate the total/completed members dynamically based on the current users
+    
     return result.length > 0;
   }
   

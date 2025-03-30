@@ -580,18 +580,60 @@ function QuizForm({
 // Users management component
 function UsersManager() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { isLoading, data: users } = useQuery<User[]>({
     queryKey: ['/api/admin/users'],
     queryFn: getQueryFn({ on401: 'throw' })
   });
+  
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const res = await apiRequest('DELETE', `/api/admin/users/${userId}`);
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "User deleted",
+        description: "User has been successfully removed",
+        variant: "default",
+      });
+      
+      // Invalidate users cache
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      
+      // Also invalidate group progress data for the user's group
+      if (data.groupCode) {
+        queryClient.invalidateQueries({ queryKey: ['/api/all-groups-progress'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/group-members'] });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete user",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
 
   const getGroupColor = (groupCode: string) => {
     switch (groupCode) {
-      case "1": return "text-blue-500 border-blue-500";
-      case "2": return "text-purple-500 border-purple-500";
-      case "3": return "text-orange-500 border-orange-500";
-      case "4": return "text-pink-500 border-pink-500";
-      default: return "";
+      case "1": return "text-blue-500 border-blue-500 bg-blue-500/10";
+      case "2": return "text-purple-500 border-purple-500 bg-purple-500/10";
+      case "3": return "text-orange-500 border-orange-500 bg-orange-500/10";
+      case "4": return "text-pink-500 border-pink-500 bg-pink-500/10";
+      default: return "text-gray-500 border-gray-500 bg-gray-500/10";
+    }
+  };
+  
+  const getGroupHeadingColor = (groupCode: string) => {
+    switch (groupCode) {
+      case "1": return "text-blue-600 border-blue-600";
+      case "2": return "text-purple-600 border-purple-600";
+      case "3": return "text-orange-600 border-orange-600";
+      case "4": return "text-pink-600 border-pink-600";
+      default: return "text-gray-600 border-gray-600";
     }
   };
 
@@ -601,70 +643,156 @@ function UsersManager() {
     if (progress >= 20) return "text-orange-500";
     return "text-red-500";
   };
+  
+  const handleDeleteUser = (userId: number) => {
+    deleteUserMutation.mutate(userId);
+  };
+  
+  // Group users by their group code
+  const groupUsers = () => {
+    if (!users) return {};
+    
+    const groups: Record<string, User[]> = {
+      "1": [],
+      "2": [],
+      "3": [],
+      "4": [],
+      "admin": []
+    };
+    
+    users.forEach(user => {
+      const groupCode = user.groupCode || "admin";
+      if (!groups[groupCode]) {
+        groups[groupCode] = [];
+      }
+      groups[groupCode].push(user);
+    });
+    
+    return groups;
+  };
 
-  if (isLoading) {
+  if (isLoading || deleteUserMutation.isPending) {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
+  
+  const groupedUsers = groupUsers();
+  const groupOrder = ["1", "2", "3", "4", "admin"];
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Users</h2>
-      <div className="grid gap-4">
-        {users?.map((user) => (
-          <Card key={user.id}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-lg">{user.username}</h3>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <Badge variant="outline" className={getGroupColor(user.groupCode)}>
-                      Group {user.groupCode}
-                    </Badge>
-                    {user.isAdmin && (
-                      <Badge variant="secondary">Admin</Badge>
-                    )}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className={`font-semibold text-lg ${getProgressColor(user.progress)}`}>
-                    {user.progress}% Complete
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    Challenge {user.currentChallenge}/5
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4">
-                <h4 className="font-medium text-sm text-slate-500 mb-1">Completed Challenges</h4>
-                <div className="flex flex-wrap gap-2">
-                  {user.completedChallenges.length > 0 ? (
-                    user.completedChallenges.map((challengeId) => (
-                      <Badge key={challengeId} variant="outline">
-                        Challenge {challengeId}
-                      </Badge>
-                    ))
-                  ) : (
-                    <p className="text-sm text-slate-400">No completed challenges</p>
-                  )}
-                </div>
-              </div>
-              <div className="mt-3 flex justify-between items-center">
-                <div>
-                  <h4 className="font-medium text-sm text-slate-500 mb-1">Quiz Progress</h4>
-                  <Badge variant={user.completedQuiz ? "secondary" : "outline"}>
-                    {user.completedQuiz ? 'Completed' : `Question ${user.lastQuizQuestion}/3`}
-                  </Badge>
-                </div>
-                <p className="text-sm text-slate-400">User ID: {user.id}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">User Management</h2>
+        <Badge variant="secondary">
+          {users?.length || 0} Total Users
+        </Badge>
       </div>
+      
+      {groupOrder.map(groupCode => {
+        const groupUsers = groupedUsers[groupCode] || [];
+        if (groupUsers.length === 0) return null;
+        
+        return (
+          <div key={groupCode} className="space-y-4">
+            <div className={`flex items-center gap-2 pb-2 border-b ${getGroupHeadingColor(groupCode)}`}>
+              <h3 className="text-xl font-bold">
+                {groupCode === 'admin' ? 'Administrators' : `Group ${groupCode}`}
+              </h3>
+              <Badge variant="secondary">
+                {groupUsers.length} User{groupUsers.length !== 1 ? 's' : ''}
+              </Badge>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {groupUsers.map((user) => (
+                <Card key={user.id} className="overflow-hidden">
+                  <div className={`h-2 w-full ${getGroupColor(user.groupCode)}`} />
+                  <CardContent className="p-4 pt-5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-lg">{user.username}</h3>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Badge variant="outline" className={getGroupColor(user.groupCode)}>
+                            Group {user.groupCode}
+                          </Badge>
+                          {user.isAdmin && (
+                            <Badge variant="secondary">Admin</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-semibold text-lg ${getProgressColor(user.progress)}`}>
+                          {user.progress}% Complete
+                        </p>
+                        <p className="text-sm text-slate-500">
+                          Challenge {user.currentChallenge}/5
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4">
+                      <h4 className="font-medium text-sm text-slate-500 mb-1">Completed Challenges</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {user.completedChallenges.length > 0 ? (
+                          user.completedChallenges.map((challengeId) => (
+                            <Badge key={challengeId} variant="outline">
+                              Challenge {challengeId}
+                            </Badge>
+                          ))
+                        ) : (
+                          <p className="text-sm text-slate-400">No completed challenges</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="mt-3 flex justify-between items-center">
+                      <div>
+                        <h4 className="font-medium text-sm text-slate-500 mb-1">Quiz Progress</h4>
+                        <Badge variant={user.completedQuiz ? "secondary" : "outline"}>
+                          {user.completedQuiz ? 'Completed' : `Question ${user.lastQuizQuestion}/3`}
+                        </Badge>
+                      </div>
+                      
+                      {/* Don't show delete button for admin users */}
+                      {!user.isAdmin && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-100">
+                              <Trash className="h-5 w-5" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete the user <strong>{user.username}</strong>. 
+                                Their progress and contributions will be removed from the group.
+                                This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteUser(user.id)}
+                                className="bg-red-500 hover:bg-red-600"
+                              >
+                                Delete User
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
