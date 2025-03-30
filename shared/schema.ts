@@ -31,6 +31,11 @@ export const groupProgress = pgTable("group_progress", {
   completedQuiz: boolean("completed_quiz").default(false),
   completionTime: integer("completion_time").default(0),
   groupPhoto: text("group_photo"), // Base64 encoded photo
+  hasPhoto: boolean("has_photo").default(false),
+  allMembersCompleted: boolean("all_members_completed").default(false),
+  totalMembers: integer("total_members").default(0),
+  completedMembers: integer("completed_members").default(0),
+  completedAt: timestamp("completed_at"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 

@@ -386,6 +386,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch group members" });
     }
   });
+  
+  // Get all groups progress for competition tracking
+  app.get("/api/all-groups-progress", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      // Get group progress for all groups
+      const allGroups = await storage.getAllGroupsProgress();
+      
+      return res.json(allGroups);
+    } catch (error) {
+      console.error("Error fetching all groups progress:", error);
+      res.status(500).json({ message: "Failed to fetch group progress data" });
+    }
+  });
 
   // ========== ADMIN API ROUTES ==========
 

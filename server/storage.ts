@@ -33,6 +33,7 @@ export interface IStorage {
   
   // Group progress related methods
   getGroupProgress(groupCode: string): Promise<GroupProgress | undefined>;
+  getAllGroupsProgress(): Promise<Record<string, GroupProgress>>;
   createOrUpdateGroupProgress(groupProgress: InsertGroupProgress): Promise<GroupProgress>;
   updateGroupCompletion(groupCode: string, completionTime: number): Promise<GroupProgress | undefined>;
   saveGroupPhoto(groupCode: string, photoData: string): Promise<GroupProgress | undefined>;
@@ -391,6 +392,62 @@ export class MemStorage implements IStorage {
     return this.groupProgressMap.get(groupCode);
   }
   
+  async getAllGroupsProgress(): Promise<Record<string, GroupProgress>> {
+    // Convert the Map to an Object with the groupCode as keys
+    const result: Record<string, GroupProgress> = {};
+    
+    // Loop through all registered users to count members per group
+    const allUsers = await this.getAllUsers();
+    const usersByGroup: Record<string, User[]> = {};
+    
+    // Group users by their group code
+    allUsers.forEach(user => {
+      if (user.groupCode !== 'admin') {
+        if (!usersByGroup[user.groupCode]) {
+          usersByGroup[user.groupCode] = [];
+        }
+        usersByGroup[user.groupCode].push(user);
+      }
+    });
+    
+    // Create a record for each valid group (1-4)
+    for (let groupCode of ["1", "2", "3", "4"]) {
+      const groupProgress = this.groupProgressMap.get(groupCode);
+      const groupMembers = usersByGroup[groupCode] || [];
+      const completedMembers = groupMembers.filter(user => user.completedQuiz).length;
+      const totalMembers = groupMembers.length;
+      const allMembersCompleted = totalMembers > 0 && completedMembers === totalMembers;
+      
+      if (groupProgress) {
+        // Update the existing group progress with member counts
+        result[groupCode] = {
+          ...groupProgress,
+          hasPhoto: !!groupProgress.groupPhoto,
+          allMembersCompleted,
+          completedMembers,
+          totalMembers
+        };
+      } else {
+        // Create a default group progress record
+        result[groupCode] = {
+          id: parseInt(groupCode),
+          groupCode,
+          completedQuiz: false,
+          completionTime: 0,
+          groupPhoto: null,
+          hasPhoto: false,
+          allMembersCompleted,
+          completedMembers,
+          totalMembers,
+          completedAt: null,
+          updatedAt: new Date()
+        };
+      }
+    }
+    
+    return result;
+  }
+  
   async createOrUpdateGroupProgress(groupProgress: InsertGroupProgress): Promise<GroupProgress> {
     const existingProgress = this.groupProgressMap.get(groupProgress.groupCode);
     
@@ -400,6 +457,11 @@ export class MemStorage implements IStorage {
       completedQuiz: groupProgress.completedQuiz ?? false,
       completionTime: groupProgress.completionTime ?? 0,
       groupPhoto: groupProgress.groupPhoto ?? null,
+      hasPhoto: !!groupProgress.groupPhoto,
+      allMembersCompleted: false,
+      totalMembers: 0,
+      completedMembers: 0,
+      completedAt: null,
       updatedAt: new Date()
     };
     
@@ -422,6 +484,9 @@ export class MemStorage implements IStorage {
       ...groupProgress,
       completionTime,
       completedQuiz: true,
+      hasPhoto: !!groupProgress.groupPhoto,
+      allMembersCompleted: true,
+      completedAt: new Date(),
       updatedAt: new Date()
     };
     
@@ -442,6 +507,7 @@ export class MemStorage implements IStorage {
     const updatedProgress = {
       ...groupProgress,
       groupPhoto: photoData,
+      hasPhoto: true,
       updatedAt: new Date()
     };
     
@@ -625,6 +691,66 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
   
+  async getAllGroupsProgress(): Promise<Record<string, GroupProgress>> {
+    // Get all group progress records from the database
+    const groupProgressRecords = await db.select().from(groupProgress);
+    
+    // Get all users for counting members by group
+    const allUsers = await this.getAllUsers();
+    const usersByGroup: Record<string, User[]> = {};
+    
+    // Group users by their group code
+    allUsers.forEach(user => {
+      if (user.groupCode !== 'admin') {
+        if (!usersByGroup[user.groupCode]) {
+          usersByGroup[user.groupCode] = [];
+        }
+        usersByGroup[user.groupCode].push(user);
+      }
+    });
+    
+    // Create a result object with group codes as keys
+    const result: Record<string, GroupProgress> = {};
+    
+    // Create a record for each valid group (1-4)
+    for (let groupCode of ["1", "2", "3", "4"]) {
+      const groupProgressRecord = groupProgressRecords.find(record => record.groupCode === groupCode);
+      const groupMembers = usersByGroup[groupCode] || [];
+      const completedMembers = groupMembers.filter(user => user.completedQuiz).length;
+      const totalMembers = groupMembers.length;
+      const allMembersCompleted = totalMembers > 0 && completedMembers === totalMembers;
+      
+      if (groupProgressRecord) {
+        // Use existing group progress record with additional calculated fields
+        result[groupCode] = {
+          ...groupProgressRecord,
+          hasPhoto: !!groupProgressRecord.groupPhoto,
+          allMembersCompleted,
+          completedMembers,
+          totalMembers,
+          completedAt: allMembersCompleted && groupProgressRecord.completedQuiz ? new Date() : null
+        };
+      } else {
+        // Create a default entry for this group
+        result[groupCode] = {
+          id: parseInt(groupCode),
+          groupCode,
+          completedQuiz: false,
+          completionTime: null,
+          groupPhoto: null,
+          hasPhoto: false,
+          allMembersCompleted,
+          completedMembers,
+          totalMembers,
+          updatedAt: new Date(),
+          completedAt: null
+        };
+      }
+    }
+    
+    return result;
+  }
+  
   async createOrUpdateGroupProgress(insertGroupProgress: InsertGroupProgress): Promise<GroupProgress> {
     // Try to get existing group progress
     const existingProgress = await this.getGroupProgress(insertGroupProgress.groupCode);
@@ -667,7 +793,10 @@ export class DatabaseStorage implements IStorage {
     const result = await db.update(groupProgress)
       .set({
         completedQuiz: true,
-        completionTime
+        completionTime,
+        hasPhoto: !!existingProgress.groupPhoto,
+        allMembersCompleted: true,
+        completedAt: new Date()
       })
       .where(eq(groupProgress.id, existingProgress.id))
       .returning();
@@ -689,7 +818,8 @@ export class DatabaseStorage implements IStorage {
     // Update existing record
     const result = await db.update(groupProgress)
       .set({
-        groupPhoto: photoData
+        groupPhoto: photoData,
+        hasPhoto: true
       })
       .where(eq(groupProgress.id, existingProgress.id))
       .returning();
