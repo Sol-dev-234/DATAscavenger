@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Edit, Trash, Plus, X, Check, Group, ListChecks, Users } from "lucide-react";
+import { Loader2, Edit, Trash, Plus, X, Check, Group, ListChecks, Users, AlertTriangle, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -88,39 +89,10 @@ function AdminTabs() {
 
 // Challenge management component
 function ChallengesManager() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [isAdding, setIsAdding] = useState(false);
-
   const { isLoading, data: challenges } = useQuery<Challenge[]>({
     queryKey: ['/api/admin/challenges'],
     queryFn: getQueryFn({ on401: 'throw' })
   });
-
-  const createMutation = useMutation({
-    mutationFn: async (challenge: z.infer<typeof insertChallengeSchema>) => {
-      const res = await apiRequest('POST', '/api/admin/challenges', challenge);
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Challenge created",
-        description: "The challenge was created successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/challenges'] });
-      setIsAdding(false);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to create challenge",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Challenge editing and deletion disabled
-  // Challenges contain prewritten passwords that must remain unchanged
 
   if (isLoading) {
     return (
@@ -134,21 +106,11 @@ function ChallengesManager() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Challenges</h2>
-        <Button onClick={() => setIsAdding(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Challenge
-        </Button>
+        <div className="bg-amber-950/30 text-amber-400 px-4 py-2 rounded-md border border-amber-800 text-sm">
+          <AlertTriangle className="h-4 w-4 inline-block mr-2" />
+          Challenge passwords cannot be modified - They are pre-set for each group
+        </div>
       </div>
-
-      {isAdding && (
-        <ChallengeForm 
-          onSubmit={(data) => createMutation.mutate(data)}
-          onCancel={() => setIsAdding(false)}
-          isSubmitting={createMutation.isPending}
-        />
-      )}
-
-      {/* Challenge editing is disabled as per requirements */}
 
       <div className="grid gap-4">
         {challenges?.map((challenge) => (
@@ -169,131 +131,19 @@ function ChallengesManager() {
             <CardContent>
               <div className="space-y-2">
                 <p className="text-sm">{challenge.description}</p>
-                <div className="flex justify-between items-center">
-                  <Badge variant="outline" className="text-amber-500 border-amber-500">Order: {challenge.order}</Badge>
-                  <p><span className="font-semibold">Answer:</span> {challenge.answer}</p>
-                </div>
+                <Alert variant="warning" className="bg-gray-950/50 border border-amber-600/30">
+                  <AlertCircle className="h-4 w-4 text-amber-500" />
+                  <AlertTitle className="text-amber-500 text-xs">Group-Specific Passwords</AlertTitle>
+                  <AlertDescription className="text-xs text-gray-400">
+                    Each group has unique passwords for this challenge. Participants will find these codes in real life.
+                  </AlertDescription>
+                </Alert>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
     </div>
-  );
-}
-
-// Challenge form for adding/editing
-function ChallengeForm({ 
-  onSubmit, 
-  onCancel, 
-  isSubmitting 
-}: { 
-  onSubmit: (data: z.infer<typeof insertChallengeSchema>) => void,
-  onCancel: () => void,
-  isSubmitting: boolean
-}) {
-  const form = useForm<z.infer<typeof insertChallengeSchema>>({
-    resolver: zodResolver(insertChallengeSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      answer: "",
-      codeName: "",
-      order: 1
-    }
-  });
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Add Challenge</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Challenge title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="codeName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Code Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Challenge code name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Challenge description" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="answer"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Answer</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Challenge answer" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="order"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Order</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      placeholder="Challenge order" 
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" type="button" onClick={onCancel}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
   );
 }
 
