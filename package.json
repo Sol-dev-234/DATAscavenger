@@ -4,9 +4,9 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-  "start": "node server.js",
-  "build": "react-scripts build",
-  "postinstall": "npm install && npm run build"
+  "dev": "vite",
+  "build": "vite build",
+  "start": "vite preview"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
