@@ -7,7 +7,7 @@
   "start": "node server.js",
   "build": "react-scripts build",
   "postinstall": "npm install && npm run build"
-  }
+  },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@jridgewell/trace-mapping": "^0.3.25",
