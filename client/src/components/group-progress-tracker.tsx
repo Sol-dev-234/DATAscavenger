@@ -95,7 +95,15 @@ export function GroupProgressTracker() {
     <div className="space-y-4">
       <h3 className="font-orbitron text-neon-blue text-sm">GROUP COMPETITION STATUS:</h3>
       
-      <div className="space-y-3">
+      <div className="space-y-3 relative">
+        {/* Success banner for completed groups */}
+        {sortedGroups.some(g => g.allMembersCompleted) && (
+          <div className="absolute -top-12 left-0 right-0 p-3 bg-neon-green/20 border border-neon-green rounded-sm">
+            <p className="text-neon-green text-sm font-tech-mono text-center animate-pulse">
+              🎉 Some groups have completed their mission! Go inform the host!
+            </p>
+          </div>
+        )}
         {sortedGroups.map((group) => {
           const isUserGroup = user?.groupCode === group.groupCode;
           const textClass = getGroupTextClass(group.groupCode);

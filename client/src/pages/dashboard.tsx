@@ -29,6 +29,7 @@ import { StarRating } from "@/components/star-rating";
 import { FinalScreen } from "@/components/final-screen";
 import { CreditScreen } from "@/components/credit-screen";
 import { GroupMembers } from "@/components/group-members";
+import { CongratulationsPopup } from "@/components/congratulations-popup";
 import { CelebrationModal } from "@/components/celebration-modal";
 
 function getGroupTextClass(groupCode?: string | number) {
@@ -296,6 +297,11 @@ export default function Dashboard() {
           <div className="mt-4 p-3 border border-neon-blue/30 rounded-sm">
             <GroupMembers />
           </div>
+
+          {/* Show congratulations when all group members complete */}
+          {progress?.groupProgress?.allMembersCompleted && (
+            <CongratulationsPopup groupCode={user?.groupCode || ""} />
+          )}
           
           {/* Timer */}
           {timerStarted && (
