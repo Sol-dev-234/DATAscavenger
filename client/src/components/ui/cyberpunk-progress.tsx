@@ -27,10 +27,9 @@ export function CyberpunkProgress({
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.5 }}
-          className={`h-full relative transition-colors duration-300`}
+          className={`h-full relative transition-all duration-300 ${color.startsWith('neon-') ? `bg-${color}` : ''}`}
           style={{
-            backgroundColor: `var(--${color})`,
-            boxShadow: `0 0 10px var(--${color})`,
+            boxShadow: `0 0 10px var(--${color.replace('neon-', '')})`,
           }}
         >
           <div className="absolute top-0 left-0 w-full h-full grid grid-cols-12 gap-0.5">

@@ -104,9 +104,7 @@ export function GroupProgressTracker() {
   
   return (
     <div className="relative p-4 border border-neon-blue/30 rounded-sm bg-gradient-to-b from-cyber-black/50 to-cyber-black/30 backdrop-blur-sm font-tech-mono overflow-hidden">
-      <h3 className="font-orbitron text-neon-blue text-sm mb-4">OTHER GROUPS PROGRESS</h3>
-      
-      {/* Completion messages */}
+      {/* Completion messages - now above the title */}
       <AnimatePresence>
         {completedMessages.map(groupCode => (
           <motion.div
@@ -114,7 +112,7 @@ export function GroupProgressTracker() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className={`absolute top-2 right-2 z-10 p-2 rounded-sm bg-gradient-to-r shadow-lg ${getGroupBgClass(groupCode)} border border-neon-green/30 mb-3`}
+            className={`relative w-full mb-4 p-2 rounded-sm bg-gradient-to-r shadow-lg ${getGroupBgClass(groupCode)} border border-neon-green/30`}
           >
             <p className={`${getGroupTextClass(groupCode)} flex items-center gap-1`}>
               <CheckCircle className="h-4 w-4 text-neon-green" />
@@ -123,6 +121,8 @@ export function GroupProgressTracker() {
           </motion.div>
         ))}
       </AnimatePresence>
+      
+      <h3 className="font-orbitron text-neon-blue text-sm mb-4">OTHER GROUPS PROGRESS</h3>
       
       <div className="space-y-3 sm:space-y-5">
         {Object.entries(allGroupsProgress)
