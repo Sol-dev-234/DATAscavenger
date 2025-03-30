@@ -36,39 +36,40 @@ function getGroupTextClass(groupCode?: string | number) {
 
 // Group-specific hints based on challenge ID and group
 function getGroupSpecificHint(challengeId: number, groupCode?: string | number) {
-  const group = groupCode?.toString() || "1";
+  // Keep the answers in code but return generic message
   const hints: Record<string, Record<number, string>> = {
     "1": {
-      1: "Your first challenge password is: Alpha123 - Enter it exactly as shown.",
-      2: "For this challenge, use the password: Beta234 - Remember, it's case-sensitive.",
-      3: "The access code for this challenge is: Gamma345",
-      4: "To proceed, enter the password: Delta456",
-      5: "Final challenge password: Epsilon567 - Enter it to complete your mission!"
+      1: "Alpha123",
+      2: "Beta234",
+      3: "Gamma345",
+      4: "Delta456",
+      5: "Epsilon567"
     },
     "2": {
-      1: "Your first challenge password is: Eta789 - Enter it exactly as shown.",
-      2: "For this challenge, use the password: Theta890 - Remember, it's case-sensitive.",
-      3: "The access code for this challenge is: Iota901",
-      4: "To proceed, enter the password: Kappa012",
-      5: "Final challenge password: Lambda123 - Enter it to complete your mission!"
+      1: "Eta789",
+      2: "Theta890",
+      3: "Iota901",
+      4: "Kappa012",
+      5: "Lambda123"
     },
     "3": {
-      1: "Your first challenge password is: Nu345 - Enter it exactly as shown.",
-      2: "For this challenge, use the password: Xi456 - Remember, it's case-sensitive.",
-      3: "The access code for this challenge is: Omicron567",
-      4: "To proceed, enter the password: Pi678",
-      5: "Final challenge password: Rho789 - Enter it to complete your mission!"
+      1: "Nu345",
+      2: "Xi456",
+      3: "Omicron567",
+      4: "Pi678",
+      5: "Rho789"
     },
     "4": {
-      1: "Your first challenge password is: Tau901 - Enter it exactly as shown.",
-      2: "For this challenge, use the password: Upsilon012 - Remember, it's case-sensitive.",
-      3: "The access code for this challenge is: Phi123",
-      4: "To proceed, enter the password: Chi234",
-      5: "Final challenge password: Psi345 - Enter it to complete your mission!"
+      1: "Tau901",
+      2: "Upsilon012",
+      3: "Phi123",
+      4: "Chi234",
+      5: "Psi345"
     }
   };
   
-  return hints[group]?.[challengeId] || "Use the decoder tools below to help solve this challenge. Each challenge may require different tools.";
+  // Always return generic message to players
+  return "Use the decoder tools and your skills to solve this challenge. The answer exists somewhere in the real world.";
 }
 
 export default function Challenge() {
