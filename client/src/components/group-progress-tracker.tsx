@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
-import { Loader2 } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { CyberpunkProgress } from "./ui/cyberpunk-progress";
 import { useAuth } from "@/hooks/use-auth";
+import { CheckCircle, Clock, Users } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface GroupProgressData {
   groupCode: string;
@@ -21,8 +22,6 @@ type AllGroupsProgress = {
 }
 
 function getGroupTextClass(groupCode: string) {
-  if (!groupCode) return "text-neon-blue";
-  
   switch (groupCode) {
     case "1": return "text-neon-blue";
     case "2": return "text-neon-purple";
@@ -33,125 +32,145 @@ function getGroupTextClass(groupCode: string) {
 }
 
 function getGroupBgClass(groupCode: string) {
-  if (!groupCode) return "bg-neon-blue/20";
-  
   switch (groupCode) {
-    case "1": return "bg-neon-blue/20";
-    case "2": return "bg-neon-purple/20";
-    case "3": return "bg-neon-orange/20";
-    case "4": return "bg-neon-pink/20";
-    default: return "bg-neon-blue/20";
+    case "1": return "from-neon-blue/5 to-neon-blue/10";
+    case "2": return "from-neon-purple/5 to-neon-purple/10";
+    case "3": return "from-neon-orange/5 to-neon-orange/10";
+    case "4": return "from-neon-pink/5 to-neon-pink/10";
+    default: return "from-neon-blue/5 to-neon-blue/10";
   }
 }
 
 export function GroupProgressTracker() {
+  const [completedMessages, setCompletedMessages] = useState<string[]>([]);
   const { user } = useAuth();
-  const { data: allGroupsProgress, isLoading, error } = useQuery<AllGroupsProgress>({
+  const userGroupCode = user?.groupCode;
+  
+  // Fetch all groups progress
+  const { data: allGroupsProgress, isLoading } = useQuery<AllGroupsProgress>({
     queryKey: ['/api/all-groups-progress'],
     queryFn: getQueryFn({ on401: 'throw' }),
-    refetchInterval: 5000 // Refresh every 5 seconds
+    refetchInterval: 5000 // Refetch every 5 seconds to keep data fresh
   });
-
-  const sortedGroups = useMemo(() => {
-    if (!allGroupsProgress) return [];
+  
+  // Check for newly completed groups and show notification
+  useEffect(() => {
+    if (!allGroupsProgress) return;
     
-    // Convert object to array and then sort
-    return Object.entries(allGroupsProgress)
-      .map(([code, data]) => ({ ...data }))
-      .sort((a, b) => {
-        // First by completion status
-        if (a.allMembersCompleted && !b.allMembersCompleted) return -1;
-        if (!a.allMembersCompleted && b.allMembersCompleted) return 1;
+    Object.entries(allGroupsProgress).forEach(([groupCode, progress]) => {
+      // Skip user's own group
+      if (groupCode === userGroupCode) return;
+      
+      // Show message when a group completes all challenges
+      if (progress.allMembersCompleted && !completedMessages.includes(groupCode)) {
+        setCompletedMessages(prev => [...prev, groupCode]);
         
-        // Then by time if both completed
-        if (a.allMembersCompleted && b.allMembersCompleted) {
-          return a.completionTime - b.completionTime;
-        }
-        
-        // Then by member completion percentage
-        const aPercentage = a.totalMembers > 0 ? (a.completedMembers / a.totalMembers) : 0;
-        const bPercentage = b.totalMembers > 0 ? (b.completedMembers / b.totalMembers) : 0;
-        return bPercentage - aPercentage;
-      });
-  }, [allGroupsProgress]);
-
+        // Auto dismiss the message after 10 seconds
+        setTimeout(() => {
+          setCompletedMessages(prev => prev.filter(code => code !== groupCode));
+        }, 10000);
+      }
+    });
+  }, [allGroupsProgress, userGroupCode, completedMessages]);
+  
+  // Format time as mm:ss
+  const formatTime = (milliseconds: number | null): string => {
+    if (!milliseconds) return "00:00";
+    const seconds = Math.floor(milliseconds / 1000);
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+  
   if (isLoading) {
     return (
-      <div className="flex justify-center py-4">
-        <Loader2 className="h-6 w-6 animate-spin text-neon-blue" />
+      <div className="p-4 border border-neon-blue/30 rounded-sm bg-gradient-to-b from-cyber-black/50 to-cyber-black/30 backdrop-blur-sm font-tech-mono">
+        <h3 className="font-orbitron text-neon-blue text-sm mb-4">OTHER GROUPS PROGRESS</h3>
+        <div className="flex items-center justify-center h-32">
+          <div className="h-5 w-5 border-t-2 border-r-2 border-neon-blue animate-spin rounded-full"></div>
+        </div>
       </div>
     );
   }
-
-  if (error || !allGroupsProgress) {
+  
+  if (!allGroupsProgress || Object.keys(allGroupsProgress).length === 0) {
     return (
-      <div className="text-red-500 text-center py-4 text-sm">
-        Error loading group progress
+      <div className="p-4 border border-neon-blue/30 rounded-sm bg-gradient-to-b from-cyber-black/50 to-cyber-black/30 backdrop-blur-sm font-tech-mono">
+        <h3 className="font-orbitron text-neon-blue text-sm mb-4">OTHER GROUPS PROGRESS</h3>
+        <p className="text-steel-blue text-center py-4">No group data available.</p>
       </div>
     );
   }
-
+  
   return (
-    <div className="space-y-4">
-      <h3 className="font-orbitron text-neon-blue text-sm">GROUP COMPETITION STATUS:</h3>
+    <div className="relative p-4 border border-neon-blue/30 rounded-sm bg-gradient-to-b from-cyber-black/50 to-cyber-black/30 backdrop-blur-sm font-tech-mono overflow-hidden">
+      <h3 className="font-orbitron text-neon-blue text-sm mb-4">OTHER GROUPS PROGRESS</h3>
       
-      <div className="space-y-3 relative">
-        {/* Success banner for completed groups */}
-        {sortedGroups.some(g => g.allMembersCompleted) && (
-          <div className="absolute -top-12 left-0 right-0 p-3 bg-neon-green/20 border border-neon-green rounded-sm">
-            <p className="text-neon-green text-sm font-tech-mono text-center animate-pulse">
-              🎉 Some groups have completed their mission! Go inform the host!
+      {/* Completion messages */}
+      <AnimatePresence>
+        {completedMessages.map(groupCode => (
+          <motion.div
+            key={`completed-${groupCode}`}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`absolute top-2 right-2 z-10 p-2 rounded-sm bg-gradient-to-r shadow-lg ${getGroupBgClass(groupCode)} border border-neon-green/30 mb-3`}
+          >
+            <p className={`${getGroupTextClass(groupCode)} flex items-center gap-1`}>
+              <CheckCircle className="h-4 w-4 text-neon-green" />
+              <span>Group {groupCode} has completed their tasks!</span>
             </p>
-          </div>
-        )}
-        {sortedGroups.map((group) => {
-          const isUserGroup = user?.groupCode === group.groupCode;
-          const textClass = getGroupTextClass(group.groupCode);
-          const bgClass = getGroupBgClass(group.groupCode);
-          const progressPercentage = group.totalMembers > 0 
-            ? Math.round((group.completedMembers / group.totalMembers) * 100) 
-            : 0;
-            
-          return (
-            <div 
-              key={group.groupCode} 
-              className={`p-2 border ${isUserGroup ? 'border-neon-green' : 'border-neon-blue/30'} rounded-sm`}
-            >
-              <div className="flex justify-between items-center mb-1">
-                <div className={`font-tech-mono ${textClass} flex items-center`}>
-                  <span className="font-bold mr-1">GROUP {group.groupCode}</span>
-                  {isUserGroup && <span className="text-xs text-neon-green ml-1">(YOUR TEAM)</span>}
+          </motion.div>
+        ))}
+      </AnimatePresence>
+      
+      <div className="space-y-5">
+        {Object.entries(allGroupsProgress)
+          .filter(([groupCode]) => groupCode !== userGroupCode) // Filter out user's own group
+          .sort(([codeA], [codeB]) => codeA.localeCompare(codeB)) // Sort by group code
+          .map(([groupCode, progress]) => {
+            const progressPercentage = progress.completedMembers > 0 && progress.totalMembers > 0
+              ? Math.floor((progress.completedMembers / progress.totalMembers) * 100)
+              : 0;
+              
+            return (
+              <div
+                key={groupCode}
+                className={`p-3 border border-neon-blue/30 rounded-sm bg-gradient-to-r ${getGroupBgClass(groupCode)}`}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className={`font-orbitron ${getGroupTextClass(groupCode)}`}>
+                    GROUP {groupCode}
+                  </h4>
+                  
+                  {progress.allMembersCompleted && (
+                    <span className="bg-neon-green/20 text-neon-green px-2 py-1 rounded-sm text-xs flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" /> COMPLETED
+                    </span>
+                  )}
                 </div>
                 
-                {group.allMembersCompleted && (
-                  <div className="text-neon-green text-xs font-tech-mono animate-pulse">
-                    MISSION COMPLETE
+                <CyberpunkProgress 
+                  value={progressPercentage}
+                  max={100}
+                  showPercentage
+                  color={getGroupTextClass(groupCode).replace('text-', '')}
+                />
+                
+                <div className="grid grid-cols-2 gap-2 mt-2 text-xs text-steel-blue">
+                  <div className="flex items-center gap-1">
+                    <Users className="h-3 w-3" />
+                    <span>Members: {progress.completedMembers}/{progress.totalMembers}</span>
                   </div>
-                )}
-              </div>
-              
-              <Progress 
-                value={group.allMembersCompleted ? 100 : progressPercentage} 
-                className={`h-2 ${group.allMembersCompleted ? "bg-neon-green/30" : bgClass}`}
-              />
-              <div className="text-xs font-tech-mono text-right mt-1">
-                {group.allMembersCompleted ? 100 : progressPercentage}%
-              </div>
-              
-              {group.allMembersCompleted && (
-                <div className="mt-1 text-xs font-tech-mono text-right text-steel-blue">
-                  Completion time: {Math.floor(group.completionTime / 1000)}s
+                  
+                  <div className="flex items-center gap-1 justify-end">
+                    <Clock className="h-3 w-3" />
+                    <span>Time: {formatTime(progress.completionTime)}</span>
+                  </div>
                 </div>
-              )}
-              
-              {group.allMembersCompleted && !isUserGroup && (
-                <div className="mt-1 text-neon-green text-xs font-tech-mono">
-                  Group {group.groupCode} has completed all challenges!
-                </div>
-              )}
-            </div>
-          );
-        })}
+              </div>
+            );
+          })}
       </div>
     </div>
   );

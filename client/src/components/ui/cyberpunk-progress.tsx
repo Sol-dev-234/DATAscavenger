@@ -1,40 +1,60 @@
-import * as React from "react";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { motion } from 'framer-motion';
 
-export interface CyberpunkProgressProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+interface CyberpunkProgressProps {
   value: number;
   max: number;
   showPercentage?: boolean;
+  color?: string;
+  className?: string;
 }
 
-const CyberpunkProgress = React.forwardRef<HTMLDivElement, CyberpunkProgressProps>(
-  ({ className, value, max, showPercentage = false, ...props }, ref) => {
-    const percentage = Math.min(Math.max(0, (value / max) * 100), 100);
-    
-    return (
-      <div
-        ref={ref}
-        className={cn("w-full flex flex-col space-y-2", className)}
-        {...props}
-      >
-        <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-neon-green transition-all duration-1000"
-            style={{ width: `${percentage}%` }}
-          />
-        </div>
+export function CyberpunkProgress({
+  value,
+  max,
+  showPercentage = false,
+  color = 'neon-blue',
+  className = '',
+}: CyberpunkProgressProps) {
+  // Ensure value is within bounds
+  const safeValue = Math.max(0, Math.min(value, max));
+  const percentage = Math.round((safeValue / max) * 100);
+
+  return (
+    <div className={`w-full overflow-hidden ${className}`}>
+      <div className="w-full h-4 bg-cyber-black border border-steel-blue/30 relative rounded-sm overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 0.5 }}
+          className={`h-full bg-${color} relative`}
+          style={{
+            boxShadow: `0 0 10px var(--${color.replace('neon-', '')})`,
+          }}
+        >
+          <div className="absolute top-0 left-0 w-full h-full grid grid-cols-12 gap-0.5">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div 
+                key={i} 
+                className="h-full bg-black/20 w-full"
+              />
+            ))}
+          </div>
+        </motion.div>
         
-        {showPercentage && (
-          <p className="mt-2 text-right font-tech-mono text-xs text-steel-blue">
-            <span>{Math.round(percentage)}%</span> COMPLETE
-          </p>
-        )}
+        {/* Glitch effect overlays */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-30 pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-white/10 to-transparent"></div>
+        </div>
       </div>
-    );
-  }
-);
-
-CyberpunkProgress.displayName = "CyberpunkProgress";
-
-export { CyberpunkProgress };
+      
+      {showPercentage && (
+        <div className="text-right mt-1">
+          <span className={`text-xs font-tech-mono text-${color}`}>
+            {percentage}%
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -31,6 +31,7 @@ import { CreditScreen } from "@/components/credit-screen";
 import { GroupMembers } from "@/components/group-members";
 import { CongratulationsPopup } from "@/components/congratulations-popup";
 import { CelebrationModal } from "@/components/celebration-modal";
+import { GroupProgressTracker } from "@/components/group-progress-tracker";
 
 function getGroupTextClass(groupCode?: string | number) {
   if (!groupCode) return "text-neon-blue";
@@ -318,12 +319,13 @@ export default function Dashboard() {
           )}
         </CyberpunkPanel>
         
-        {/* Right Panel: Welcome Screen */}
+        {/* Right Panel: Welcome Screen and Group Progress */}
         <CyberpunkPanel className="md:w-2/3 flex flex-col p-4">
-          <div className="p-4 flex-1 flex flex-col items-center justify-center text-center">
-            <h2 className="font-orbitron text-2xl text-neon-blue mb-6">WELCOME TO THE CYBER CHALLENGE</h2>
+          {/* Top section with welcome message */}
+          <div className="p-4 flex-1 flex flex-col">
+            <h2 className="font-orbitron text-2xl text-neon-blue mb-6 text-center">WELCOME TO THE CYBER CHALLENGE</h2>
             
-            <div className="terminal-output mb-6 w-full max-w-xl font-tech-mono bg-cyber-black/80 border border-neon-blue/30 rounded-sm text-steel-blue p-4 text-left">
+            <div className="terminal-output mb-6 w-full font-tech-mono bg-cyber-black/80 border border-neon-blue/30 rounded-sm text-steel-blue p-4 text-left">
               <p>$ SYSTEM BOOT SEQUENCE INITIATED</p>
               <p>$ LOADING CORE SYSTEMS...</p>
               <p>$ INITIALIZING NEURAL INTERFACE...</p>
@@ -332,15 +334,26 @@ export default function Dashboard() {
               <p>$ SELECT A CHALLENGE FROM THE MISSION PANEL TO BEGIN</p>
             </div>
             
-            <p className="font-tech-mono text-steel-blue mb-8 max-w-lg">
-              Each challenge will test different aspects of your IT knowledge. Complete all challenges to prove your skills and earn your rank as a cyber specialist.
-            </p>
-            
-            <CyberpunkButton
-              onClick={() => handleChallengeClick(progress?.currentChallenge || 1)}
-            >
-              BEGIN CURRENT CHALLENGE
-            </CyberpunkButton>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="flex flex-col justify-between">
+                <p className="font-tech-mono text-steel-blue mb-8">
+                  Each challenge will test different aspects of your IT knowledge. Complete all challenges to prove your skills and earn your rank as a cyber specialist.
+                </p>
+                
+                <div className="flex justify-center">
+                  <CyberpunkButton
+                    onClick={() => handleChallengeClick(progress?.currentChallenge || 1)}
+                  >
+                    BEGIN CURRENT CHALLENGE
+                  </CyberpunkButton>
+                </div>
+              </div>
+              
+              {/* Group Progress Tracker */}
+              <div>
+                <GroupProgressTracker />
+              </div>
+            </div>
           </div>
         </CyberpunkPanel>
       </div>

@@ -1,30 +1,25 @@
-import * as React from "react";
-import { cn } from "@/lib/utils";
+import { ReactNode } from 'react';
 
-export interface CyberpunkPanelProps
-  extends React.HTMLAttributes<HTMLDivElement> {
-  glow?: boolean;
+interface CyberpunkPanelProps {
+  children: ReactNode;
+  className?: string;
+  variant?: 'default' | 'accent';
 }
 
-const CyberpunkPanel = React.forwardRef<HTMLDivElement, CyberpunkPanelProps>(
-  ({ className, glow = false, children, ...props }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "relative border border-neon-blue/30 rounded-sm bg-cyber-black/70",
-          glow && "shadow-[0_0_10px_rgba(0,243,255,0.5),inset_0_0_10px_rgba(0,243,255,0.2)]",
-          glow && "animate-glow",
-          className
-        )}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  }
-);
+export function CyberpunkPanel({
+  children,
+  className = '',
+  variant = 'default',
+}: CyberpunkPanelProps) {
+  const baseClasses = 'rounded-sm flex flex-col overflow-hidden shadow-lg';
+  const variantClasses = 
+    variant === 'default'
+      ? 'border border-neon-blue/30 bg-gradient-to-b from-cyber-black/50 to-cyber-black/30 backdrop-blur-sm'
+      : 'border border-neon-purple/30 bg-gradient-to-b from-cyber-black/50 to-cyber-black/30 backdrop-blur-sm';
 
-CyberpunkPanel.displayName = "CyberpunkPanel";
-
-export { CyberpunkPanel };
+  return (
+    <div className={`${baseClasses} ${variantClasses} ${className}`}>
+      {children}
+    </div>
+  );
+}
