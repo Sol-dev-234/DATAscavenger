@@ -6,8 +6,8 @@
   "scripts": {
   "dev": "vite",
   "build": "vite build",
-  "start": "vite preview"
-  },
+  "start": "node server.js"
+},
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@jridgewell/trace-mapping": "^0.3.25",
