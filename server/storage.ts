@@ -684,11 +684,59 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getGroupProgress(groupCode: string): Promise<GroupProgress | undefined> {
-    const result = await db.select()
-      .from(groupProgress)
-      .where(eq(groupProgress.groupCode, groupCode));
-    
-    return result[0];
+    try {
+      const result = await db.select()
+        .from(groupProgress)
+        .where(eq(groupProgress.groupCode, groupCode));
+      
+      // Get all users in this group to calculate member stats
+      const allUsers = await this.getAllUsers();
+      const groupMembers = allUsers.filter(user => user.groupCode === groupCode);
+      const completedMembers = groupMembers.filter(user => user.completedQuiz).length;
+      const totalMembers = groupMembers.length;
+      const allMembersCompleted = totalMembers > 0 && completedMembers === totalMembers;
+      
+      if (result.length === 0) {
+        // Return default progress if no record exists
+        return {
+          id: parseInt(groupCode),
+          groupCode,
+          completedQuiz: false,
+          completionTime: null,
+          groupPhoto: null,
+          hasPhoto: false,
+          allMembersCompleted,
+          completedMembers,
+          totalMembers,
+          completedAt: null,
+          updatedAt: new Date()
+        };
+      }
+      
+      // Return existing progress with updated member stats
+      return {
+        ...result[0],
+        hasPhoto: !!result[0].groupPhoto,
+        allMembersCompleted,
+        completedMembers,
+        totalMembers
+      };
+    } catch (error) {
+      console.error('Error fetching group progress:', error);
+      return {
+        id: parseInt(groupCode),
+        groupCode,
+        completedQuiz: false,
+        completionTime: null,
+        groupPhoto: null,
+        hasPhoto: false,
+        allMembersCompleted: false,
+        completedMembers: 0,
+        totalMembers: 0,
+        completedAt: null,
+        updatedAt: new Date()
+      };
+    }
   }
   
   async getAllGroupsProgress(): Promise<Record<string, GroupProgress>> {
