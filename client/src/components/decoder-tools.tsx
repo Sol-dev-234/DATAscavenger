@@ -39,14 +39,37 @@ function BinaryDecoder() {
   const [output, setOutput] = useState("[OUTPUT WILL APPEAR HERE]");
   const [showCamera, setShowCamera] = useState(false);
   
-  const handleImageCapture = async (imageData: string) => {
+  const handleImageCapture = async () => {
     try {
-      // Here we would integrate with OCR API to extract text
-      // For now, simulating OCR with sample binary
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' }, // Prefer back camera
+        audio: false 
+      });
+      
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      await video.play();
+
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const context = canvas.getContext('2d');
+      context?.drawImage(video, 0, 0);
+      
+      // Stop camera after capture
+      stream.getTracks().forEach(track => track.stop());
+      
+      // For demo, using sample binary. In production, would use OCR
       setInput("01001000 01100101 01101100 01101100 01101111");
       setShowCamera(false);
     } catch (error) {
-      console.error('Failed to process image:', error);
+      console.error('Failed to access camera:', error);
+      toast({
+        title: "Camera Error",
+        description: "Please grant camera permissions to use this feature.",
+        variant: "destructive"
+      });
     }
   };
   

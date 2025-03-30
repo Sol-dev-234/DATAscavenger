@@ -23,8 +23,19 @@ export function WebcamCapture({ onPhotoCaptured }: WebcamCaptureProps) {
   // Start camera
   const startCamera = useCallback(async () => {
     try {
+      // First check if permissions are already granted
+      const permissions = await navigator.permissions.query({ name: 'camera' as PermissionName });
+      
+      if (permissions.state === 'denied') {
+        throw new Error('Camera permission was denied');
+      }
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: true,
+        video: {
+          facingMode: 'user', // Front camera for group photos
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
         audio: false
       });
       
@@ -38,7 +49,9 @@ export function WebcamCapture({ onPhotoCaptured }: WebcamCaptureProps) {
       console.error("Error accessing camera:", err);
       toast({
         title: "Camera Error",
-        description: "Unable to access camera. Please check permissions.",
+        description: err.message === 'Camera permission was denied' 
+          ? "Please enable camera access in your browser settings."
+          : "Unable to access camera. Please check your device.",
         variant: "destructive"
       });
     }
