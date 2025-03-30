@@ -124,7 +124,7 @@ export function GroupProgressTracker() {
         ))}
       </AnimatePresence>
       
-      <div className="space-y-5">
+      <div className="space-y-3 sm:space-y-5">
         {Object.entries(allGroupsProgress)
           .filter(([groupCode]) => groupCode !== userGroupCode) // Filter out user's own group
           .sort(([codeA], [codeB]) => codeA.localeCompare(codeB)) // Sort by group code
@@ -154,10 +154,10 @@ export function GroupProgressTracker() {
                   value={progressPercentage}
                   max={100}
                   showPercentage
-                  color={getGroupTextClass(groupCode).replace('text-', '')}
+                  color={progress.allMembersCompleted ? 'neon-green' : getGroupTextClass(groupCode).replace('text-', '')}
                 />
                 
-                <div className="grid grid-cols-2 gap-2 mt-2 text-xs text-steel-blue">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 text-xs text-steel-blue">
                   <div className="flex items-center gap-1">
                     <Users className="h-3 w-3" />
                     <span>Members: {progress.completedMembers}/{progress.totalMembers}</span>
