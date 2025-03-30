@@ -739,13 +739,13 @@ export class DatabaseStorage implements IStorage {
           id: parseInt(groupCode),
           groupCode,
           completedQuiz: false,
-          completionTime: null,
+          completionTime: allMembersCompleted ? Date.now() - new Date(result[0]?.updatedAt || Date.now()).getTime() : null,
           groupPhoto: null,
           hasPhoto: false,
           allMembersCompleted,
           completedMembers,
           totalMembers,
-          completedAt: null,
+          completedAt: allMembersCompleted ? new Date().toISOString() : null,
           updatedAt: new Date()
         };
       }

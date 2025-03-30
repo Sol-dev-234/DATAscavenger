@@ -76,9 +76,9 @@ export function GroupProgressTracker() {
   // Format time as mm:ss
   const formatTime = (milliseconds: number | null): string => {
     if (!milliseconds) return "00:00";
-    const seconds = Math.floor(milliseconds / 1000);
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
   
