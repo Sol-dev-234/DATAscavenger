@@ -25,17 +25,25 @@ function Star({ active, animate }: { active: boolean; animate: boolean }) {
   return (
     <motion.div
       className={cn(
-        "progress-star", 
-        active ? "bg-neon-green shadow-[0_0_10px_#39ff14]" : "bg-steel-blue/30 shadow-none"
+        "progress-star relative", 
+        active ? "text-neon-green" : "text-muted-foreground"
       )}
-      initial={animate ? { scale: 0 } : { scale: 1 }}
-      animate={animate ? { scale: [0, 1.5, 1] } : { scale: 1 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
+      initial={animate ? { scale: 0, rotate: -180 } : { scale: 1 }}
+      animate={animate ? { 
+        scale: [0, 1.2, 1],
+        rotate: [-180, 0],
+      } : { scale: 1 }}
+      transition={{ 
+        duration: 0.6, 
+        ease: "backOut",
+      }}
       style={{
-        clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
-        width: "25px",
-        height: "25px",
-        display: "inline-block"
+        width: "35px",
+        height: "35px",
+        display: "inline-block",
+        filter: active ? "drop-shadow(0 0 12px #39ff14)" : "none",
+        WebkitBackfaceVisibility: "hidden",
+        backfaceVisibility: "hidden"
       }}
     />
   );
