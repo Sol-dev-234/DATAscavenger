@@ -42,8 +42,8 @@ function Star({ active, animate }: { active: boolean; animate: boolean }) {
         height: "35px",
         display: "inline-block",
         filter: active ? "drop-shadow(0 0 12px #39ff14)" : "none",
-        WebkitBackfaceVisibility: "hidden",
-        backfaceVisibility: "hidden"
+        transform: "translateZ(0)", // Hardware acceleration
+        willChange: "transform" // Optimization hint
       }}
     />
   );

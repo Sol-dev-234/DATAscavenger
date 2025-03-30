@@ -73,25 +73,34 @@ export default function Dashboard() {
     }
   }, [progress]);
   
-  // Timer logic
+  // Timer logic with proper cleanup and memoization
+  const formatTime = useCallback((seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }, []);
+
   useEffect(() => {
-    // Start timer when challenges are started but not completed
-    if (progress && progress.completedChallenges?.length > 0 && (progress.progress || 0) < 100 && !timerStarted) {
+    // Don't show credits initially if user has progress
+    if (progress?.completedChallenges?.length > 0) {
+      setShowCredits(false);
+    }
+
+    // Start timer when first challenge is completed
+    if (progress?.completedChallenges?.length && !timerStarted) {
       setTimerStarted(true);
     }
     
-    // Timer interval
-    let interval: NodeJS.Timeout | null = null;
-    if (timerStarted && (progress?.progress || 0) < 100) {
-      interval = setInterval(() => {
-        setElapsedTime(prev => prev + 1);
-      }, 1000);
-    }
+    const shouldRunTimer = timerStarted && (progress?.progress || 0) < 100;
     
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [progress, timerStarted]);
+    if (!shouldRunTimer) return;
+    
+    const interval = setInterval(() => {
+      setElapsedTime(prev => prev + 1);
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [progress?.completedChallenges, progress?.progress, timerStarted]);
   
   // Format time as mm:ss
   const formatTime = (seconds: number): string => {
