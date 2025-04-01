@@ -1,3 +1,4 @@
+
 {
   "version": 2,
   "builds": [
@@ -20,8 +21,40 @@
       "dest": "/dist/sw.js"
     },
     {
+      "src": "/offline.html",
+      "dest": "/dist/offline.html"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/dist/assets/$1"
+    },
+    {
+      "src": "/icons/(.*)",
+      "dest": "/dist/icons/$1"
+    },
+    {
+      "src": "/screenshots/(.*)",
+      "dest": "/dist/screenshots/$1"
+    },
+    {
       "src": "/api/health",
       "dest": "/api/health.js"
+    },
+    {
+      "src": "/api/auth/(.*)",
+      "dest": "/api/auth/$1.js"
+    },
+    {
+      "src": "/api/challenges/(.*)",
+      "dest": "/api/challenges/$1.js"
+    },
+    {
+      "src": "/api/quizzes/(.*)",
+      "dest": "/api/quizzes/$1.js"
+    },
+    {
+      "src": "/api/users/(.*)",
+      "dest": "/api/users/$1.js"
     },
     {
       "src": "/api/(.*)",
@@ -35,4 +68,4 @@
   "env": {
     "NODE_ENV": "production"
   }
-} 
+}
