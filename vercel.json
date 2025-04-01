@@ -1,66 +1,31 @@
-      "dest": "/api/auth/me.js"
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
     },
     {
-      "src": "/api/challenges",
-      "methods": ["GET", "POST"],
-      "dest": "/api/challenges/index.js"
+      "src": "dist/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/manifest.json",
+      "dest": "/dist/manifest.json"
     },
     {
-      "src": "/api/challenges/(?<id>[^/]+)",
-      "methods": ["GET", "PUT", "DELETE"],
-      "dest": "/api/challenges/[id].js?id=$id"
+      "src": "/sw.js",
+      "dest": "/dist/sw.js"
     },
     {
-      "src": "/api/quizzes",
-      "methods": ["GET", "POST"],
-      "dest": "/api/quizzes/index.js"
-    },
-    {
-      "src": "/api/quizzes/(?<id>[^/]+)",
-      "methods": ["GET", "PUT", "DELETE"],
-      "dest": "/api/quizzes/[id].js?id=$id"
-    },
-    {
-      "src": "/api/users",
-      "methods": ["GET", "POST"],
-      "dest": "/api/users/index.js"
-    },
-    {
-      "src": "/api/users/(?<id>[^/]+)",
-      "methods": ["GET", "PUT", "DELETE"],
-      "dest": "/api/users/[id].js?id=$id"
-    },
-    {
-      "src": "/api/users/achievements",
-      "dest": "/api/users/achievements.js"
-    },
-    {
-      "src": "/api/achievements",
-      "methods": ["GET", "POST"],
-      "dest": "/api/achievements/index.js"
-    },
-    {
-      "src": "/api/achievements/(?<id>[^/]+)",
-      "methods": ["GET", "PUT", "DELETE"],
-      "dest": "/api/achievements/[id].js?id=$id"
-    },
-    {
-      "src": "/api/group-photos",
-      "methods": ["GET"],
-      "dest": "/api/group-photos.js"
-    },
-    {
-      "src": "/api/group-photo",
-      "methods": ["POST"],
-      "dest": "/api/group-photo.js"
+      "src": "/api/health",
+      "dest": "/api/health.js"
     },
     {
       "src": "/api/(.*)",
       "dest": "/api/$1.js"
-    },
-    {
-      "src": "/dist/(.*)",
-      "dest": "/dist/$1"
     },
     {
       "src": "/(.*)",
@@ -70,4 +35,4 @@
   "env": {
     "NODE_ENV": "production"
   }
-}
+} 
