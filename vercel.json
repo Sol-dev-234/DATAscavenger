@@ -1,0 +1,73 @@
+      "dest": "/api/auth/me.js"
+    },
+    {
+      "src": "/api/challenges",
+      "methods": ["GET", "POST"],
+      "dest": "/api/challenges/index.js"
+    },
+    {
+      "src": "/api/challenges/(?<id>[^/]+)",
+      "methods": ["GET", "PUT", "DELETE"],
+      "dest": "/api/challenges/[id].js?id=$id"
+    },
+    {
+      "src": "/api/quizzes",
+      "methods": ["GET", "POST"],
+      "dest": "/api/quizzes/index.js"
+    },
+    {
+      "src": "/api/quizzes/(?<id>[^/]+)",
+      "methods": ["GET", "PUT", "DELETE"],
+      "dest": "/api/quizzes/[id].js?id=$id"
+    },
+    {
+      "src": "/api/users",
+      "methods": ["GET", "POST"],
+      "dest": "/api/users/index.js"
+    },
+    {
+      "src": "/api/users/(?<id>[^/]+)",
+      "methods": ["GET", "PUT", "DELETE"],
+      "dest": "/api/users/[id].js?id=$id"
+    },
+    {
+      "src": "/api/users/achievements",
+      "dest": "/api/users/achievements.js"
+    },
+    {
+      "src": "/api/achievements",
+      "methods": ["GET", "POST"],
+      "dest": "/api/achievements/index.js"
+    },
+    {
+      "src": "/api/achievements/(?<id>[^/]+)",
+      "methods": ["GET", "PUT", "DELETE"],
+      "dest": "/api/achievements/[id].js?id=$id"
+    },
+    {
+      "src": "/api/group-photos",
+      "methods": ["GET"],
+      "dest": "/api/group-photos.js"
+    },
+    {
+      "src": "/api/group-photo",
+      "methods": ["POST"],
+      "dest": "/api/group-photo.js"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1.js"
+    },
+    {
+      "src": "/dist/(.*)",
+      "dest": "/dist/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dist/index.html"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
